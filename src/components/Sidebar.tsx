@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ClipboardPaste, History, LayoutDashboard, Menu, Swords, Users, X } from "lucide-react";
+import { ClipboardPaste, History, LayoutDashboard, Menu, ShieldCheck, Swords, Users, X } from "lucide-react";
+import type { AuthUser } from "@/types";
+import { LogoutButton } from "./LogoutButton";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -67,41 +69,49 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function SidebarFooter() {
+function SidebarFooter({ user }: { user: AuthUser }) {
   return (
     <div className="mt-auto px-4 pb-6 pt-8">
       <div className="rounded-xl border border-night-700 bg-night-850/80 px-4 py-3.5">
-        <p className="text-xs font-bold tracking-wide text-ink-muted">Boss Rotation Tracker</p>
-        <p className="mt-1 flex items-center gap-1.5 text-[11px] text-ink-muted/70">
-          <span className="h-1.5 w-1.5 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.9)]" />
-          v1.0 · online
-        </p>
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gold-500/20 bg-gold-500/10">
+            <ShieldCheck className="h-4.5 w-4.5 text-gold-400" strokeWidth={2.1} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-bold text-ink">{user.name}</p>
+            <p className="mt-0.5 truncate text-[11px] text-ink-muted">{user.email}</p>
+          </div>
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-2 border-t border-night-700/80 pt-3">
+          <div>
+            <p className="text-[11px] font-bold tracking-wide text-ink-muted">Boss Rotation Tracker</p>
+            <p className="mt-0.5 text-[10px] text-ink-muted/70">v1.1 · conta protegida</p>
+          </div>
+          <LogoutButton />
+        </div>
       </div>
     </div>
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ user }: { user: AuthUser }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  // Fecha o drawer ao trocar de rota
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
   return (
     <>
-      {/* Sidebar fixa — desktop */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-night-700 bg-night-900/70 backdrop-blur-xl lg:flex">
         <div className="px-6 pb-8 pt-7">
           <Logo />
         </div>
         <NavLinks />
-        <SidebarFooter />
+        <SidebarFooter user={user} />
       </aside>
 
-      {/* Top bar — mobile */}
       <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between border-b border-night-700 bg-night-950/85 px-4 backdrop-blur-xl lg:hidden">
         <Logo />
         <button
@@ -114,7 +124,6 @@ export function Sidebar() {
         </button>
       </header>
 
-      {/* Drawer — mobile */}
       <div className={`fixed inset-0 z-50 lg:hidden ${open ? "" : "pointer-events-none"}`} aria-hidden={!open}>
         <div
           onClick={() => setOpen(false)}
@@ -139,7 +148,15 @@ export function Sidebar() {
             </button>
           </div>
           <NavLinks onNavigate={() => setOpen(false)} />
-          <SidebarFooter />
+          <div className="mt-auto px-4 pb-6 pt-8">
+            <div className="rounded-xl border border-night-700 bg-night-850/80 px-4 py-3.5">
+              <p className="truncate text-sm font-bold text-ink">{user.name}</p>
+              <p className="mt-0.5 truncate text-[11px] text-ink-muted">{user.email}</p>
+              <div className="mt-3 border-t border-night-700/80 pt-3">
+                <LogoutButton mobile />
+              </div>
+            </div>
+          </div>
         </aside>
       </div>
     </>

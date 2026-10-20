@@ -1,18 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { characters, hunts } from "@/db/schema";
+import { getCurrentUser } from "@/lib/auth";
 import { fetchTibiaCharacter } from "@/lib/tibiadata";
 import type { CharacterWithStats } from "@/types";
 
 export const dynamic = "force-dynamic";
 
-/**
- * GET /api/characters — personagens cadastrados + agregados
- * (sessões, profit, loot e XP somados de todas as hunts de cada um).
- */
+/** GET /api/characters — lista somente personagens do usuário autenticado. */
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+    }
+
     const rows = await db
       .select({
         id: characters.id,
@@ -28,6 +31,7 @@ export async function GET() {
       })
       .from(characters)
       .leftJoin(hunts, eq(hunts.characterId, characters.id))
+      .where(eq(characters.userId, user.id))
       .groupBy(characters.id)
       .orderBy(asc(characters.name));
 
@@ -51,12 +55,14 @@ export async function GET() {
   }
 }
 
-/**
- * POST /api/characters — { name }
- * Busca o personagem na TibiaData API (fonte da verdade) e salva localmente.
- */
+/** POST /api/characters — busca na TibiaData e salva na conta do usuário atual. */
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+    }
+
     const body = (await req.json()) as { name?: string };
     const name = typeof body.name === "string" ? body.name.trim() : "";
 
@@ -81,22 +87,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Duplicado? (case-insensitive — nomes do Tibia são únicos)
     const existing = await db
       .select({ id: characters.id })
       .from(characters)
-      .where(sql`lower(${characters.name}) = lower(${info.name})`)
+      .where(and(eq(characters.userId, user.id), sql`lower(${characters.name}) = lower(${info.name})`))
       .limit(1);
     if (existing.length > 0) {
-      return NextResponse.json(
-        { error: `"${info.name}" já está cadastrado.` },
-        { status: 409 },
-      );
+      return NextResponse.json({ error: `"${info.name}" já está cadastrado nesta conta.` }, { status: 409 });
     }
 
     const [inserted] = await db
       .insert(characters)
-      .values({ name: info.name, world: info.world, vocation: info.vocation, level: info.level })
+      .values({ userId: user.id, name: info.name, world: info.world, vocation: info.vocation, level: info.level })
       .returning();
 
     return NextResponse.json(

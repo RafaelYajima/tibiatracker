@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
 import { fetchTibiaCharacter } from "@/lib/tibiadata";
 
 export const dynamic = "force-dynamic";
 
-/**
- * GET /api/characters/lookup?name=X
- * Proxy server-side para a TibiaData API — devolve os dados públicos
- * do personagem sem salvar nada (usado no preview antes de cadastrar).
- */
+/** Proxy autenticado para lookup na TibiaData antes de salvar o personagem. */
 export async function GET(req: NextRequest) {
   const name = (req.nextUrl.searchParams.get("name") ?? "").trim();
 
@@ -16,6 +13,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+    }
+
     const info = await fetchTibiaCharacter(name);
     if (!info) {
       return NextResponse.json(

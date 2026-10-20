@@ -121,6 +121,8 @@ Abra `https://github.com/SEU-USUARIO/tibiatracker`:
 4. Copie o conteúdo completo, cole no editor e clique em **Run**.
 5. O resultado deve mostrar sucesso.
 6. Em **Table Editor**, confirme as tabelas:
+   - `users`
+   - `sessions`
    - `characters`
    - `hunts`
    - `hunt_items`
@@ -211,9 +213,10 @@ Quando o deploy terminar:
 
 1. abra a URL fornecida pela Vercel;
 2. acesse `/api/health` — deve retornar `{"ok":true}`;
-3. abra **Personagens**, busque um boneco real e cadastre;
-4. registre uma hunt de teste;
-5. no Supabase **Table Editor**, confirme as linhas em `characters`, `hunts` e `hunt_items`.
+3. abra `/register`, crie a primeira conta e faça login;
+4. abra **Personagens**, busque um boneco real e cadastre;
+5. registre uma hunt de teste;
+6. no Supabase **Table Editor**, confirme as linhas em `users`, `sessions`, `characters`, `hunts` e `hunt_items`.
 
 ### 4. Deploys seguintes são automáticos
 

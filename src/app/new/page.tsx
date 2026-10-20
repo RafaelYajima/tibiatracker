@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import { NewHuntForm } from "@/components/NewHuntForm";
+import { requireUser } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Nova Hunt",
 };
 
-export default function NewHuntPage() {
+export const dynamic = "force-dynamic";
+
+export default async function NewHuntPage() {
+  await requireUser();
+
   return (
     <div className="mx-auto max-w-6xl">
       <header className="animate-fade-up mb-6">

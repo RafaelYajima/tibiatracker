@@ -1,3 +1,10 @@
+export interface AuthUser {
+  id: string;
+  createdAt: string;
+  name: string;
+  email: string;
+}
+
 export interface HuntItem {
   id: string;
   huntId: string;
@@ -64,6 +71,15 @@ export interface CreateHuntPayload {
   xpPerHour: number;
   rawText?: string;
   items: CreateHuntItemPayload[];
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
+export interface RegisterPayload extends LoginPayload {
+  name: string;
 }
 
 /** Dados de um personagem vindos da TibiaData API (antes de salvar). */

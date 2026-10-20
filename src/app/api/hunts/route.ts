@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { and, desc, eq, gte, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { characters, huntItems, hunts } from "@/db/schema";
+import { getCurrentUser } from "@/lib/auth";
 import { getFilterStartDate, isTimeFilter } from "@/lib/time";
 import type { CreateHuntPayload, HuntCharacterRef, HuntItem, HuntWithItems } from "@/types";
 
@@ -11,16 +12,22 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 /**
  * GET /api/hunts?filter=today|7d|30d|month|all&character=<id|all>
- * Lista hunts + itens, com filtro de período e de personagem no banco.
+ * Lista apenas as hunts do usuário autenticado.
  */
 export async function GET(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+    }
+
     const filterParam = req.nextUrl.searchParams.get("filter");
     const filter = isTimeFilter(filterParam) ? filterParam : "all";
     const start = getFilterStartDate(filter);
 
     const characterParam = req.nextUrl.searchParams.get("character");
     const conditions = [
+      eq(hunts.userId, user.id),
       start ? gte(hunts.createdAt, start) : undefined,
       characterParam && characterParam !== "all" && UUID_RE.test(characterParam)
         ? eq(hunts.characterId, characterParam)
@@ -33,7 +40,6 @@ export async function GET(req: NextRequest) {
       .where(and(...conditions))
       .orderBy(desc(hunts.createdAt));
 
-    // Itens de todas as hunts retornadas
     const itemsByHunt = new Map<string, HuntItem[]>();
     if (rows.length > 0) {
       const itemRows = await db
@@ -48,13 +54,15 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Personagens vinculados
     const characterIds = Array.from(
       new Set(rows.map((r) => r.characterId).filter((id): id is string => id !== null)),
     );
     const characterById = new Map<string, HuntCharacterRef>();
     if (characterIds.length > 0) {
-      const charRows = await db.select().from(characters).where(inArray(characters.id, characterIds));
+      const charRows = await db
+        .select()
+        .from(characters)
+        .where(and(inArray(characters.id, characterIds), eq(characters.userId, user.id)));
       for (const c of charRows) {
         characterById.set(c.id, { id: c.id, name: c.name, world: c.world, vocation: c.vocation });
       }
@@ -87,9 +95,13 @@ function toInt(value: unknown, fallback = 0): number {
   return Number.isFinite(n) ? Math.trunc(n) : fallback;
 }
 
-/** POST /api/hunts — salva a hunt (vinculada ao personagem) e os itens em batch. */
+/** POST /api/hunts — salva uma hunt do usuário autenticado. */
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+    }
     const body = (await req.json()) as Partial<CreateHuntPayload>;
 
     const duration = typeof body.duration === "string" ? body.duration.trim() : "";
@@ -97,7 +109,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Campo 'duration' é obrigatório." }, { status: 400 });
     }
 
-    // Valida o personagem, se informado
     let character: HuntCharacterRef | null = null;
     let characterId: string | null = null;
     if (typeof body.characterId === "string" && body.characterId) {
@@ -107,10 +118,10 @@ export async function POST(req: NextRequest) {
       const found = await db
         .select()
         .from(characters)
-        .where(eq(characters.id, body.characterId))
+        .where(and(eq(characters.id, body.characterId), eq(characters.userId, user.id)))
         .limit(1);
       if (found.length === 0) {
-        return NextResponse.json({ error: "Personagem não cadastrado." }, { status: 400 });
+        return NextResponse.json({ error: "Personagem não cadastrado nesta conta." }, { status: 400 });
       }
       const c = found[0];
       character = { id: c.id, name: c.name, world: c.world, vocation: c.vocation };
@@ -126,10 +137,10 @@ export async function POST(req: NextRequest) {
       .filter((i) => i.name.length > 0 && i.qty > 0)
       .slice(0, 500);
 
-    // 1) Salva a hunt
     const [inserted] = await db
       .insert(hunts)
       .values({
+        userId: user.id,
         characterId,
         duration,
         loot: toInt(body.loot),
@@ -141,19 +152,13 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
-    // 2) Salva os itens em batch
     let savedItems: HuntItem[] = [];
     if (items.length > 0) {
       const insertedItems = await db
         .insert(huntItems)
         .values(items.map((i) => ({ huntId: inserted.id, name: i.name, qty: i.qty })))
         .returning();
-      savedItems = insertedItems.map((i) => ({
-        id: i.id,
-        huntId: i.huntId,
-        name: i.name,
-        qty: i.qty,
-      }));
+      savedItems = insertedItems.map((i) => ({ id: i.id, huntId: i.huntId, name: i.name, qty: i.qty }));
     }
 
     const hunt: HuntWithItems = {

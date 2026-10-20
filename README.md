@@ -50,7 +50,8 @@ configuração da Vercel, checklist e solução dos erros mais comuns.
 
 2. **Crie as tabelas** — no Dashboard do Supabase, abra **SQL Editor → New query**,
    cole todo o conteúdo de [`supabase/schema.sql`](./supabase/schema.sql) e clique em **Run**.
-   O script cria `hunts`, `hunt_items`, índices e as policies `Allow all` de RLS.
+   O schema atual (v3) cria `users`, `sessions`, `characters`, `hunts` e `hunt_items`,
+   além dos índices e das policies `Allow all` de RLS.
 
 3. **Configure o ambiente**:
 
@@ -89,11 +90,13 @@ configuração da Vercel, checklist e solução dos erros mais comuns.
 
 ## Como usar durante a rotação
 
-1. Termine a sessão e abra o **Hunt Analyser** no client do Tibia.
-2. Clique em **Copy to Clipboard**.
-3. No app, **Nova Hunt** → cole no campo → confira o preview (Loot / Supplies / Profit / itens).
-4. **Salvar Hunt** — o app volta pro dashboard em ~1.5s.
-5. Acompanhe o profit do time no **Dashboard** e o detalhe de cada sessão no **Histórico**.
+1. No primeiro acesso, crie sua conta em **/register** e entre no app.
+2. Cadastre seus personagens na página **Personagens**.
+3. Termine a sessão e abra o **Hunt Analyser** no client do Tibia.
+4. Clique em **Copy to Clipboard**.
+5. No app, **Nova Hunt** → cole no campo → confira o preview (Loot / Supplies / Profit / itens).
+6. Selecione o boneco correspondente e clique em **Salvar Hunt**.
+7. Acompanhe o profit no **Dashboard** e o detalhe de cada sessão no **Histórico**.
 
 ## Formato do clipboard (client real)
 
