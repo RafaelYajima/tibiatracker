@@ -24,7 +24,8 @@ import { useRouter } from "next/navigation";
 import { getActivityShortLabel } from "@/lib/activity";
 import { formatFull, formatGP, formatSignedGP } from "@/lib/format";
 import type { HuntWithItems } from "@/types";
-import { EmptyState, GoldButton, GoldLink, Modal, OutlineButton } from "./ui";
+import { EmptyState, GoldButton, GoldLink, OutlineButton } from "./ui";
+import { Modal } from "./Modal";
 
 interface HuntsTableProps {
   hunts: HuntWithItems[];
