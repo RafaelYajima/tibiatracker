@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ */
+/* Tema "Tibia dark" — tokens                                          */
+/* ------------------------------------------------------------------ */
+@theme {
+  /* Fundo / superfícies */
+  --color-night-950: #0f0f14;
+  --color-night-900: #14141d;
+  --color-night-850: #1a1a24;
+  --color-night-800: #20202e;
+  --color-night-750: #262637;
+  --color-night-700: #2a2a3a;
+  --color-night-600: #3a3a52;
+
+  /* Dourado */
+  --color-gold-300: #f0d078;
+  --color-gold-400: #e0bd58;
+  --color-gold-500: #d4a843;
+  --color-gold-600: #b8902f;
+  --color-gold-700: #a07820;
+
+  /* Texto */
+  --color-ink: #e2e2e8;
+  --color-ink-muted: #8888a0;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* ------------------------------------------------------------------ */
+/* Base                                                                */
+/* ------------------------------------------------------------------ */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a3a #0f0f14;
+}
+
+body {
+  background-color: #0f0f14;
+  color: #e2e2e8;
+  background-image:
+    radial-gradient(60rem 32rem at 88% -12%, rgba(212, 168, 67, 0.07), transparent 60%),
+    radial-gradient(48rem 28rem at -12% 45%, rgba(96, 165, 250, 0.035), transparent 60%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+::selection {
+  background: rgba(212, 168, 67, 0.28);
+  color: #ffffff;
+}
+
+/* Scrollbar customizada (WebKit) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0f0f14;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2a3a;
+  border-radius: 8px;
+  border: 2px solid #0f0f14;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a07820;
+}
+
+/* ------------------------------------------------------------------ */
+/* Animações                                                           */
+/* ------------------------------------------------------------------ */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Foco acessível dourado */
+:where(button, a, textarea, [role="tab"]):focus-visible {
+  outline: 2px solid rgba(212, 168, 67, 0.6);
+  outline-offset: 2px;
+}

@@ -1,0 +1,50 @@
+name: Validar TibiaTracker
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Parser, tipos e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Valor sintético: o build só precisa que a variável exista.
+    # Nenhuma query é feita durante a compilação das rotas dinâmicas.
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/app_db
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências exatas
+        run: npm ci
+
+      - name: Testar parser com amostras reais
+        run: node tests/hunt-analyser-parser.test.mjs
+
+      - name: Gerar tipos do Next.js
+        run: npx next typegen
+
+      - name: Verificar TypeScript
+        run: npm exec tsc -- --noEmit --pretty false
+
+      - name: Gerar build de produção
+        run: npm run build
