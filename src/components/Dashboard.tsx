@@ -2,27 +2,19 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import {
-  CircleAlert,
-  Coins,
-  Gem,
-  Package,
-  Plus,
-  Receipt,
-  RefreshCw,
-  Swords,
-  TrendingUp,
-} from "lucide-react";
+import { CircleAlert, Coins, Gem, Package, Plus, Receipt, RefreshCw, Swords, TrendingUp } from "lucide-react";
 import { useHunts } from "@/hooks/useHunts";
-import { profitByDay, summarize, topItems } from "@/lib/stats";
+import { type ActivityFilterValue, getActivityLabel } from "@/lib/activity";
 import { formatFull, formatGP, formatSignedGP } from "@/lib/format";
+import { profitByDay, summarize, topItems } from "@/lib/stats";
 import { TIME_FILTERS, type TimeFilter } from "@/lib/time";
+import { ActivityFilter } from "./ActivityFilter";
+import { CharacterFilter } from "./CharacterFilter";
+import { HuntsTable } from "./HuntsTable";
+import { ProfitAreaChart } from "./ProfitAreaChart";
 import { StatCard } from "./StatCard";
 import { TimeFilterPills } from "./TimeFilterPills";
-import { CharacterFilter } from "./CharacterFilter";
-import { ProfitAreaChart } from "./ProfitAreaChart";
 import { TopItemsBarChart } from "./TopItemsBarChart";
-import { HuntsTable } from "./HuntsTable";
 import { EmptyState, GoldLink, OutlineButton, PanelSkeleton, SectionCard, StatCardSkeleton, TableSkeleton } from "./ui";
 
 const FILTER_PERIOD: Record<TimeFilter, string> = {
@@ -36,7 +28,8 @@ const FILTER_PERIOD: Record<TimeFilter, string> = {
 export function Dashboard() {
   const [filter, setFilter] = useState<TimeFilter>("7d");
   const [characterId, setCharacterId] = useState("all");
-  const { hunts, loading, error, refetch } = useHunts(filter, characterId);
+  const [activity, setActivity] = useState<ActivityFilterValue>("all");
+  const { hunts, loading, error, refetch } = useHunts(filter, characterId, activity);
 
   const summary = useMemo(() => summarize(hunts), [hunts]);
   const dayData = useMemo(() => profitByDay(hunts), [hunts]);
@@ -45,35 +38,29 @@ export function Dashboard() {
   const filterLabel = TIME_FILTERS.find((f) => f.value === filter)?.label ?? "";
   const profitPositive = summary.profit >= 0;
   const hasData = hunts.length > 0;
+  const activityText = activity === "all" ? "todos os registros" : getActivityLabel(activity).toLowerCase();
 
   return (
     <div>
-      {/* Header */}
       <header className="animate-fade-up flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gold-500/80">
-            Boss Rotation
-          </p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gold-500/80">Hunts & Bosses</p>
           <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-            Dashboard{" "}
-            <span className="bg-gradient-to-r from-gold-300 to-gold-600 bg-clip-text text-transparent">
-              de Profit
-            </span>
+            Dashboard <span className="bg-gradient-to-r from-gold-300 to-gold-600 bg-clip-text text-transparent">de Lucros</span>
           </h1>
           <p className="mt-1.5 text-sm text-ink-muted">
             {loading
               ? `Carregando sessões · ${filterLabel}…`
-              : `${summary.sessions} ${summary.sessions === 1 ? "sessão registrada" : "sessões registradas"} ${FILTER_PERIOD[filter]}`}
+              : `${summary.sessions} ${summary.sessions === 1 ? "registro" : "registros"} de ${activityText} ${FILTER_PERIOD[filter]}`}
           </p>
         </div>
         <GoldLink href="/new" className="shrink-0">
-          <Plus className="h-4 w-4" strokeWidth={2.6} />
-          Nova Hunt
+          <Plus className="h-4 w-4" strokeWidth={2.6} /> Novo Registro
         </GoldLink>
       </header>
 
-      {/* Filtros */}
       <div className="animate-fade-up mt-6 flex flex-col gap-3" style={{ animationDelay: "60ms" }}>
+        <ActivityFilter value={activity} onChange={setActivity} />
         <TimeFilterPills value={filter} onChange={setFilter} />
         <CharacterFilter value={characterId} onChange={setCharacterId} />
       </div>
@@ -110,7 +97,6 @@ export function Dashboard() {
         </>
       ) : (
         <>
-          {/* Stat cards */}
           <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             <StatCard
               label="Profit Total"
@@ -140,7 +126,7 @@ export function Dashboard() {
               delay={200}
             />
             <StatCard
-              label="Sessões"
+              label="Registros"
               value={String(summary.sessions)}
               sub={`${formatFull(summary.xp)} de XP ganho`}
               icon={Swords}
@@ -152,12 +138,11 @@ export function Dashboard() {
 
           {hasData ? (
             <>
-              {/* Gráficos */}
               <div className="mt-6 grid gap-6 lg:grid-cols-5">
                 <SectionCard
                   className="lg:col-span-3"
                   title="Profit por dia"
-                  subtitle="Balance somado por dia no período"
+                  subtitle="Balance somado por dia no período selecionado"
                   icon={TrendingUp}
                   contentClassName="p-2 sm:p-4"
                   delay={320}
@@ -167,7 +152,7 @@ export function Dashboard() {
                 <SectionCard
                   className="lg:col-span-2"
                   title="Top Itens"
-                  subtitle="Os 8 itens mais dropados no período"
+                  subtitle="Top 8 por quantidade no período atual"
                   icon={Package}
                   contentClassName="p-2 sm:p-4"
                   delay={380}
@@ -178,26 +163,22 @@ export function Dashboard() {
                     <EmptyState
                       icon={Package}
                       title="Sem itens registrados"
-                      message="As hunts deste período não têm itens listados no texto do Hunt Analyser."
+                      message="Os registros deste período não têm itens listados no texto do Hunt Analyser."
                     />
                   )}
                 </SectionCard>
               </div>
 
-              {/* Últimas hunts */}
               <SectionCard
                 className="mt-6"
-                title="Últimas Hunts"
+                title="Últimos Registros"
                 subtitle="As 10 sessões mais recentes do período"
                 icon={Swords}
                 contentClassName="p-0"
                 delay={440}
                 actions={
-                  <Link
-                    href="/history"
-                    className="text-xs font-semibold text-gold-400 transition-colors hover:text-gold-300"
-                  >
-                    Ver todas →
+                  <Link href="/history" className="text-xs font-semibold text-gold-400 transition-colors hover:text-gold-300">
+                    Ver histórico →
                   </Link>
                 }
               >
@@ -209,9 +190,9 @@ export function Dashboard() {
               <SectionCard contentClassName="p-0" delay={320}>
                 <EmptyState
                   icon={Swords}
-                  title={`Nenhuma hunt ${FILTER_PERIOD[filter]}`}
-                  message="Cole o texto do Hunt Analyser depois da próxima rotação de boss para começar a montar o histórico do time."
-                  action={<GoldLink href="/new">Registrar primeira hunt</GoldLink>}
+                  title={`Nenhum registro ${FILTER_PERIOD[filter]}`}
+                  message="Cadastre um lucro de hunt ou uma rotação de bosses para começar a montar seu histórico."
+                  action={<GoldLink href="/new">Criar primeiro registro</GoldLink>}
                 />
               </SectionCard>
             </div>

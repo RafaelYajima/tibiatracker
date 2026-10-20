@@ -1,9 +1,5 @@
 import { index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
-/**
- * Usuários do TibiaTracker.
- * Cada conta enxerga apenas seus personagens e hunts.
- */
 export const users = pgTable(
   "users",
   {
@@ -16,10 +12,6 @@ export const users = pgTable(
   (t) => [index("users_email_idx").on(t.email)],
 );
 
-/**
- * Sessões persistidas no banco.
- * O cookie guarda o token bruto; no banco salvamos apenas o SHA-256 dele.
- */
 export const sessions = pgTable(
   "sessions",
   {
@@ -34,10 +26,6 @@ export const sessions = pgTable(
   (t) => [index("sessions_user_id_idx").on(t.userId), index("sessions_expires_at_idx").on(t.expiresAt)],
 );
 
-/**
- * Tabela `characters` — bonecos de um usuário.
- * Dados (level/vocation/world) são preenchidos via TibiaData API e representam um snapshot.
- */
 export const characters = pgTable(
   "characters",
   {
@@ -54,10 +42,6 @@ export const characters = pgTable(
   (t) => [index("characters_user_id_idx").on(t.userId), index("characters_name_idx").on(t.name)],
 );
 
-/**
- * Tabela `hunts` — uma linha por sessão de hunt/boss rotation.
- * `user_id` isola os dados por conta; `character_id` vincula ao boneco.
- */
 export const hunts = pgTable(
   "hunts",
   {
@@ -66,6 +50,7 @@ export const hunts = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    activityType: text("activity_type").notNull().default("boss_rotation"),
     characterId: uuid("character_id").references(() => characters.id, { onDelete: "set null" }),
     duration: text("duration").notNull(),
     loot: integer("loot").notNull().default(0),
@@ -79,13 +64,10 @@ export const hunts = pgTable(
     index("hunts_created_at_idx").on(t.createdAt),
     index("hunts_user_id_idx").on(t.userId),
     index("hunts_character_id_idx").on(t.characterId),
+    index("hunts_activity_type_idx").on(t.activityType),
   ],
 );
 
-/**
- * Tabela `hunt_items` — itens dropados/usados em cada hunt.
- * Se a hunt for deletada, os itens caem junto (cascade).
- */
 export const huntItems = pgTable(
   "hunt_items",
   {

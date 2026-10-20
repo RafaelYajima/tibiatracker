@@ -13,15 +13,14 @@ import {
   TrendingUp,
   Zap,
 } from "lucide-react";
-import type { HuntWithItems } from "@/types";
+import { getActivityShortLabel } from "@/lib/activity";
 import { formatFull, formatGP, formatSignedGP } from "@/lib/format";
+import type { HuntWithItems } from "@/types";
 import { EmptyState, GoldLink } from "./ui";
 
 interface HuntsTableProps {
   hunts: HuntWithItems[];
-  /** Permite expandir a linha para ver os itens da hunt. */
   expandable?: boolean;
-  /** Ativa paginação client-side. */
   paginated?: boolean;
   pageSize?: number;
 }
@@ -46,9 +45,7 @@ function ProfitCell({ value }: { value: number }) {
   const positive = value >= 0;
   return (
     <span
-      className={`inline-flex items-center gap-1.5 whitespace-nowrap font-bold ${
-        positive ? "text-green-400" : "text-red-400"
-      }`}
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap font-bold ${positive ? "text-green-400" : "text-red-400"}`}
       title={`${formatFull(value)} gp`}
     >
       {positive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
@@ -63,7 +60,6 @@ const iconBtnClass =
 export function HuntsTable({ hunts, expandable = false, paginated = false, pageSize = 12 }: HuntsTableProps) {
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
   const pageCount = Math.max(1, Math.ceil(hunts.length / pageSize));
 
   useEffect(() => {
@@ -81,9 +77,9 @@ export function HuntsTable({ hunts, expandable = false, paginated = false, pageS
     return (
       <EmptyState
         icon={Swords}
-        title="Nenhuma hunt no período"
-        message="Cole o Hunt Analyser depois da próxima rotação para começar a montar seu histórico de profit."
-        action={<GoldLink href="/new">Registrar hunt</GoldLink>}
+        title="Nenhum registro no período"
+        message="Cadastre uma hunt ou uma rotação de bosses para começar a montar seu histórico de profit."
+        action={<GoldLink href="/new">Criar registro</GoldLink>}
       />
     );
   }
@@ -117,39 +113,33 @@ export function HuntsTable({ hunts, expandable = false, paginated = false, pageS
                 <Fragment key={hunt.id}>
                   <tr
                     onClick={expandable ? () => setExpandedId(expanded ? null : hunt.id) : undefined}
-                    className={`border-b border-night-700/60 transition-colors ${
-                      expandable ? "cursor-pointer" : ""
-                    } ${expanded ? "bg-gold-500/[0.04]" : "hover:bg-night-800/50"}`}
+                    className={`border-b border-night-700/60 transition-colors ${expandable ? "cursor-pointer" : ""} ${expanded ? "bg-gold-500/[0.04]" : "hover:bg-night-800/50"}`}
                   >
                     {expandable && (
                       <td className="px-3 py-3.5">
-                        <ChevronRight
-                          className={`h-4 w-4 text-ink-muted transition-transform duration-200 ${
-                            expanded ? "rotate-90 text-gold-400" : ""
-                          }`}
-                        />
+                        <ChevronRight className={`h-4 w-4 text-ink-muted transition-transform duration-200 ${expanded ? "rotate-90 text-gold-400" : ""}`} />
                       </td>
                     )}
                     <td className="whitespace-nowrap px-4 py-3.5 text-xs font-medium text-ink">
                       {Number.isNaN(date.getTime()) ? "—" : format(date, "dd/MM/yyyy HH:mm")}
-                      {hunt.character && (
-                        <span className="mt-0.5 block text-[10px] font-bold uppercase tracking-wide text-gold-500/80">
-                          {hunt.character.name}
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        <span className="inline-flex rounded-full border border-gold-500/20 bg-gold-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-gold-300">
+                          {getActivityShortLabel(hunt.activityType)}
                         </span>
-                      )}
+                        {hunt.character && (
+                          <span className="inline-flex rounded-full border border-night-700 bg-night-800 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                            {hunt.character.name}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5">
                       <span className="inline-flex items-center gap-1.5 text-xs text-ink-muted">
-                        <Clock className="h-3 w-3 text-gold-500/70" />
-                        {hunt.duration}
+                        <Clock className="h-3 w-3 text-gold-500/70" /> {hunt.duration}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-right text-xs font-semibold text-green-400">
-                      {formatGP(hunt.loot)}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-right text-xs font-semibold text-red-400">
-                      {formatGP(hunt.supplies)}
-                    </td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-right text-xs font-semibold text-green-400">{formatGP(hunt.loot)}</td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-right text-xs font-semibold text-red-400">{formatGP(hunt.supplies)}</td>
                     <td className="whitespace-nowrap px-4 py-3.5 text-right text-xs">
                       <ProfitCell value={hunt.balance} />
                     </td>
@@ -160,10 +150,7 @@ export function HuntsTable({ hunts, expandable = false, paginated = false, pageS
                         {hunt.items.length > 0 ? (
                           <div className="flex flex-wrap gap-1.5">
                             {hunt.items.map((item) => (
-                              <span
-                                key={item.id}
-                                className="inline-flex items-center gap-1.5 rounded-md border border-night-700 bg-night-800 px-2 py-1 text-[11px]"
-                              >
+                              <span key={item.id} className="inline-flex items-center gap-1.5 rounded-md border border-night-700 bg-night-800 px-2 py-1 text-[11px]">
                                 <span className="text-ink">{item.name}</span>
                                 <span className="font-extrabold text-gold-400">{formatFull(item.qty)}×</span>
                               </span>
@@ -195,7 +182,7 @@ export function HuntsTable({ hunts, expandable = false, paginated = false, pageS
       {paginated && pageCount > 1 && (
         <div className="flex items-center justify-between gap-2 px-4 py-3">
           <p className="text-[11px] text-ink-muted">
-            {hunts.length} hunts · página {page} de {pageCount}
+            {hunts.length} registros · página {page} de {pageCount}
           </p>
           <div className="flex items-center gap-1">
             <button type="button" aria-label="Página anterior" className={iconBtnClass} disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
@@ -204,9 +191,7 @@ export function HuntsTable({ hunts, expandable = false, paginated = false, pageS
             <div className="hidden items-center gap-1 sm:flex">
               {pageWindow(page, pageCount).map((p, i) =>
                 p === "…" ? (
-                  <span key={`ellipsis-${i}`} className="px-1.5 text-xs text-ink-muted">
-                    …
-                  </span>
+                  <span key={`ellipsis-${i}`} className="px-1.5 text-xs text-ink-muted">…</span>
                 ) : (
                   <button
                     key={p}
@@ -223,13 +208,7 @@ export function HuntsTable({ hunts, expandable = false, paginated = false, pageS
                 ),
               )}
             </div>
-            <button
-              type="button"
-              aria-label="Próxima página"
-              className={iconBtnClass}
-              disabled={page === pageCount}
-              onClick={() => setPage((p) => p + 1)}
-            >
+            <button type="button" aria-label="Próxima página" className={iconBtnClass} disabled={page === pageCount} onClick={() => setPage((p) => p + 1)}>
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { HuntWithItems } from "@/types";
 import type { TimeFilter } from "@/lib/time";
+import type { ActivityFilterValue } from "@/lib/activity";
 
 interface UseHuntsResult {
   hunts: HuntWithItems[];
@@ -11,11 +12,12 @@ interface UseHuntsResult {
   refetch: () => void;
 }
 
-/**
- * Busca hunts na API aplicando filtro de tempo e, opcionalmente,
- * filtro de personagem ("all" ou id). Ambos resolvidos no servidor.
- */
-export function useHunts(filter: TimeFilter, characterId: string = "all"): UseHuntsResult {
+/** Busca hunts com filtro de tempo, personagem e tipo de atividade. */
+export function useHunts(
+  filter: TimeFilter,
+  characterId: string = "all",
+  activity: ActivityFilterValue = "all",
+): UseHuntsResult {
   const [hunts, setHunts] = useState<HuntWithItems[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,18 +26,18 @@ export function useHunts(filter: TimeFilter, characterId: string = "all"): UseHu
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ filter, character: characterId });
+      const params = new URLSearchParams({ filter, character: characterId, activity });
       const res = await fetch(`/api/hunts?${params.toString()}`, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { hunts: HuntWithItems[] };
       setHunts(data.hunts ?? []);
     } catch (err) {
       console.error("[useHunts]", err);
-      setError("Não foi possível carregar as hunts.");
+      setError("Não foi possível carregar os registros.");
     } finally {
       setLoading(false);
     }
-  }, [filter, characterId]);
+  }, [filter, characterId, activity]);
 
   useEffect(() => {
     fetchHunts();

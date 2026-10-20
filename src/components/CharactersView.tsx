@@ -185,7 +185,7 @@ export function CharactersView() {
       <header className="animate-fade-up flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gold-500/80">
-            Boss Rotation
+            Hunts & Bosses
           </p>
           <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
             <span className="bg-gradient-to-r from-gold-300 to-gold-600 bg-clip-text text-transparent">

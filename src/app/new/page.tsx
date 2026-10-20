@@ -3,7 +3,7 @@ import { NewHuntForm } from "@/components/NewHuntForm";
 import { requireUser } from "@/lib/auth";
 
 export const metadata: Metadata = {
-  title: "Nova Hunt",
+  title: "Novo Registro",
 };
 
 export const dynamic = "force-dynamic";
@@ -14,19 +14,12 @@ export default async function NewHuntPage() {
   return (
     <div className="mx-auto max-w-6xl">
       <header className="animate-fade-up mb-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gold-500/80">
-          Registrar sessão
-        </p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gold-500/80">Registrar sessão</p>
         <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-          Nova{" "}
-          <span className="bg-gradient-to-r from-gold-300 to-gold-600 bg-clip-text text-transparent">
-            Hunt
-          </span>
+          Novo <span className="bg-gradient-to-r from-gold-300 to-gold-600 bg-clip-text text-transparent">Registro</span>
         </h1>
         <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-ink-muted">
-          Ao final da rotação, abra o Hunt Analyser no client, clique em{" "}
-          <span className="font-semibold text-ink">Copy to Clipboard</span> e cole o texto abaixo. O parsing é
-          automático — confira o preview e salve.
+          Salve tanto <span className="font-semibold text-ink">lucros de hunts</span> quanto <span className="font-semibold text-ink">rotações de bosses</span>. Escolha o tipo do registro, cole o Hunt Analyser, confira o preview e vincule ao personagem correto.
         </p>
       </header>
       <NewHuntForm />

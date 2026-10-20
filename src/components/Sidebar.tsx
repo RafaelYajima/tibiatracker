@@ -3,15 +3,27 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ClipboardPaste, History, LayoutDashboard, Menu, ShieldCheck, Swords, Users, X } from "lucide-react";
+import {
+  ClipboardPaste,
+  History,
+  LayoutDashboard,
+  Menu,
+  Settings,
+  ShieldCheck,
+  Swords,
+  UserRound,
+  Users,
+  X,
+} from "lucide-react";
 import type { AuthUser } from "@/types";
 import { LogoutButton } from "./LogoutButton";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/new", label: "Nova Hunt", icon: ClipboardPaste },
+  { href: "/new", label: "Novo Registro", icon: ClipboardPaste },
   { href: "/history", label: "Histórico", icon: History },
   { href: "/characters", label: "Personagens", icon: Users },
+  { href: "/profile", label: "Perfil", icon: Settings },
 ] as const;
 
 function Logo() {
@@ -25,7 +37,7 @@ function Logo() {
           Tibia<span className="text-gold-400">Tracker</span>
         </span>
         <span className="block text-[10px] font-semibold uppercase tracking-[0.24em] text-ink-muted">
-          Profit & Loot
+          Hunts & Bosses
         </span>
       </span>
     </Link>
@@ -69,27 +81,28 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function SidebarFooter({ user }: { user: AuthUser }) {
+function AccountCard({ user }: { user: AuthUser }) {
   return (
-    <div className="mt-auto px-4 pb-6 pt-8">
-      <div className="rounded-xl border border-night-700 bg-night-850/80 px-4 py-3.5">
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gold-500/20 bg-gold-500/10">
-            <ShieldCheck className="h-4.5 w-4.5 text-gold-400" strokeWidth={2.1} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold text-ink">{user.name}</p>
-            <p className="mt-0.5 truncate text-[11px] text-ink-muted">{user.email}</p>
-          </div>
-        </div>
-        <div className="mt-3 flex items-center justify-between gap-2 border-t border-night-700/80 pt-3">
-          <div>
-            <p className="text-[11px] font-bold tracking-wide text-ink-muted">Boss Rotation Tracker</p>
-            <p className="mt-0.5 text-[10px] text-ink-muted/70">v1.1 · conta protegida</p>
-          </div>
-          <LogoutButton />
+    <div className="rounded-xl border border-night-700 bg-night-850/80 px-4 py-3.5">
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gold-500/20 bg-gold-500/10">
+          <ShieldCheck className="h-4.5 w-4.5 text-gold-400" strokeWidth={2.1} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-bold text-ink">{user.name}</p>
+          <p className="mt-0.5 truncate text-[11px] text-ink-muted">{user.email}</p>
         </div>
       </div>
+      <div className="mt-3 flex items-center gap-2 border-t border-night-700/80 pt-3">
+        <Link
+          href="/profile"
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-night-700 bg-night-900 px-3 py-2 text-xs font-semibold text-ink-muted transition-colors hover:border-gold-500/30 hover:text-gold-300"
+        >
+          <UserRound className="h-3.5 w-3.5" /> Perfil
+        </Link>
+        <LogoutButton />
+      </div>
+      <p className="mt-3 text-[10px] text-ink-muted/70">Conta protegida · seus dados são separados por usuário</p>
     </div>
   );
 }
@@ -109,7 +122,9 @@ export function Sidebar({ user }: { user: AuthUser }) {
           <Logo />
         </div>
         <NavLinks />
-        <SidebarFooter user={user} />
+        <div className="mt-auto px-4 pb-6 pt-8">
+          <AccountCard user={user} />
+        </div>
       </aside>
 
       <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between border-b border-night-700 bg-night-950/85 px-4 backdrop-blur-xl lg:hidden">
@@ -149,13 +164,7 @@ export function Sidebar({ user }: { user: AuthUser }) {
           </div>
           <NavLinks onNavigate={() => setOpen(false)} />
           <div className="mt-auto px-4 pb-6 pt-8">
-            <div className="rounded-xl border border-night-700 bg-night-850/80 px-4 py-3.5">
-              <p className="truncate text-sm font-bold text-ink">{user.name}</p>
-              <p className="mt-0.5 truncate text-[11px] text-ink-muted">{user.email}</p>
-              <div className="mt-3 border-t border-night-700/80 pt-3">
-                <LogoutButton mobile />
-              </div>
-            </div>
+            <AccountCard user={user} />
           </div>
         </aside>
       </div>

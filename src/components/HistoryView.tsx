@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { CircleAlert, History, Plus, RefreshCw } from "lucide-react";
 import { useHunts } from "@/hooks/useHunts";
+import type { ActivityFilterValue } from "@/lib/activity";
 import type { TimeFilter } from "@/lib/time";
-import { TimeFilterPills } from "./TimeFilterPills";
+import { ActivityFilter } from "./ActivityFilter";
 import { CharacterFilter } from "./CharacterFilter";
 import { HuntsTable } from "./HuntsTable";
+import { TimeFilterPills } from "./TimeFilterPills";
 import { EmptyState, GoldLink, OutlineButton, SectionCard, TableSkeleton } from "./ui";
 
 const FILTER_PERIOD: Record<TimeFilter, string> = {
@@ -20,34 +22,30 @@ const FILTER_PERIOD: Record<TimeFilter, string> = {
 export function HistoryView() {
   const [filter, setFilter] = useState<TimeFilter>("7d");
   const [characterId, setCharacterId] = useState("all");
-  const { hunts, loading, error, refetch } = useHunts(filter, characterId);
+  const [activity, setActivity] = useState<ActivityFilterValue>("all");
+  const { hunts, loading, error, refetch } = useHunts(filter, characterId, activity);
 
   return (
     <div>
       <header className="animate-fade-up flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gold-500/80">
-            Boss Rotation
-          </p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gold-500/80">Hunts & Bosses</p>
           <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-            Histórico{" "}
-            <span className="bg-gradient-to-r from-gold-300 to-gold-600 bg-clip-text text-transparent">
-              de Hunts
-            </span>
+            Histórico <span className="bg-gradient-to-r from-gold-300 to-gold-600 bg-clip-text text-transparent">de Registros</span>
           </h1>
           <p className="mt-1.5 text-sm text-ink-muted">
             {loading
               ? "Carregando sessões…"
-              : `${hunts.length} ${hunts.length === 1 ? "hunt" : "hunts"} ${FILTER_PERIOD[filter]} · clique numa linha para ver os itens`}
+              : `${hunts.length} ${hunts.length === 1 ? "registro" : "registros"} ${FILTER_PERIOD[filter]} · clique numa linha para ver os itens`}
           </p>
         </div>
         <GoldLink href="/new" className="shrink-0">
-          <Plus className="h-4 w-4" strokeWidth={2.6} />
-          Nova Hunt
+          <Plus className="h-4 w-4" strokeWidth={2.6} /> Novo Registro
         </GoldLink>
       </header>
 
       <div className="animate-fade-up mt-6 flex flex-col gap-3" style={{ animationDelay: "60ms" }}>
+        <ActivityFilter value={activity} onChange={setActivity} />
         <TimeFilterPills value={filter} onChange={setFilter} />
         <CharacterFilter value={characterId} onChange={setCharacterId} />
       </div>
@@ -70,7 +68,7 @@ export function HistoryView() {
           <TableSkeleton rows={8} />
         ) : (
           <SectionCard
-            title="Todas as Hunts"
+            title="Todos os Registros"
             subtitle={`${hunts.length} ${hunts.length === 1 ? "sessão" : "sessões"} em ordem da mais recente`}
             icon={History}
             contentClassName="p-0"

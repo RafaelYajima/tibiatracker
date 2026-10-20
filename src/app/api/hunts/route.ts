@@ -3,6 +3,7 @@ import { and, desc, eq, gte, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { characters, huntItems, hunts } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import { isActivityType } from "@/lib/activity";
 import { getFilterStartDate, isTimeFilter } from "@/lib/time";
 import type { CreateHuntPayload, HuntCharacterRef, HuntItem, HuntWithItems } from "@/types";
 
@@ -10,10 +11,7 @@ export const dynamic = "force-dynamic";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/**
- * GET /api/hunts?filter=today|7d|30d|month|all&character=<id|all>
- * Lista apenas as hunts do usuário autenticado.
- */
+/** GET /api/hunts — lista registros do usuário com filtros de período, personagem e tipo. */
 export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser();
@@ -26,11 +24,16 @@ export async function GET(req: NextRequest) {
     const start = getFilterStartDate(filter);
 
     const characterParam = req.nextUrl.searchParams.get("character");
+    const activityParam = req.nextUrl.searchParams.get("activity");
+
     const conditions = [
       eq(hunts.userId, user.id),
       start ? gte(hunts.createdAt, start) : undefined,
       characterParam && characterParam !== "all" && UUID_RE.test(characterParam)
         ? eq(hunts.characterId, characterParam)
+        : undefined,
+      activityParam && activityParam !== "all" && isActivityType(activityParam)
+        ? eq(hunts.activityType, activityParam)
         : undefined,
     ];
 
@@ -72,6 +75,7 @@ export async function GET(req: NextRequest) {
       id: h.id,
       createdAt: h.createdAt.toISOString(),
       characterId: h.characterId,
+      activityType: h.activityType as HuntWithItems["activityType"],
       duration: h.duration,
       loot: h.loot,
       supplies: h.supplies,
@@ -86,7 +90,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ hunts: result });
   } catch (error) {
     console.error("[GET /api/hunts]", error);
-    return NextResponse.json({ error: "Falha ao carregar hunts." }, { status: 500 });
+    return NextResponse.json({ error: "Falha ao carregar registros." }, { status: 500 });
   }
 }
 
@@ -95,7 +99,7 @@ function toInt(value: unknown, fallback = 0): number {
   return Number.isFinite(n) ? Math.trunc(n) : fallback;
 }
 
-/** POST /api/hunts — salva uma hunt do usuário autenticado. */
+/** POST /api/hunts — salva uma hunt/rotação do usuário autenticado. */
 export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser();
@@ -105,6 +109,10 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as Partial<CreateHuntPayload>;
 
     const duration = typeof body.duration === "string" ? body.duration.trim() : "";
+    const activityType = typeof body.activityType === "string" && isActivityType(body.activityType)
+      ? body.activityType
+      : "boss_rotation";
+
     if (!duration) {
       return NextResponse.json({ error: "Campo 'duration' é obrigatório." }, { status: 400 });
     }
@@ -130,10 +138,7 @@ export async function POST(req: NextRequest) {
 
     const rawItems = Array.isArray(body.items) ? body.items : [];
     const items = rawItems
-      .map((i) => ({
-        name: typeof i?.name === "string" ? i.name.trim() : "",
-        qty: toInt(i?.qty),
-      }))
+      .map((i) => ({ name: typeof i?.name === "string" ? i.name.trim() : "", qty: toInt(i?.qty) }))
       .filter((i) => i.name.length > 0 && i.qty > 0)
       .slice(0, 500);
 
@@ -141,6 +146,7 @@ export async function POST(req: NextRequest) {
       .insert(hunts)
       .values({
         userId: user.id,
+        activityType,
         characterId,
         duration,
         loot: toInt(body.loot),
@@ -165,6 +171,7 @@ export async function POST(req: NextRequest) {
       id: inserted.id,
       createdAt: inserted.createdAt.toISOString(),
       characterId: inserted.characterId,
+      activityType: inserted.activityType as HuntWithItems["activityType"],
       duration: inserted.duration,
       loot: inserted.loot,
       supplies: inserted.supplies,
@@ -179,6 +186,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ hunt }, { status: 201 });
   } catch (error) {
     console.error("[POST /api/hunts]", error);
-    return NextResponse.json({ error: "Falha ao salvar hunt." }, { status: 500 });
+    return NextResponse.json({ error: "Falha ao salvar registro." }, { status: 500 });
   }
 }

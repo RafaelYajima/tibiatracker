@@ -1,3 +1,5 @@
+import type { ActivityType } from "@/lib/activity";
+
 export interface AuthUser {
   id: string;
   createdAt: string;
@@ -12,7 +14,6 @@ export interface HuntItem {
   qty: number;
 }
 
-/** Personagem salvo localmente (dados vindos da TibiaData API). */
 export interface Character {
   id: string;
   createdAt: string;
@@ -22,7 +23,6 @@ export interface Character {
   level: number;
 }
 
-/** Personagem + agregados de hunts (usado na página Personagens). */
 export interface CharacterWithStats extends Character {
   sessions: number;
   totalProfit: number;
@@ -30,7 +30,6 @@ export interface CharacterWithStats extends Character {
   totalXp: number;
 }
 
-/** Referência enxuta embutida em cada hunt. */
 export interface HuntCharacterRef {
   id: string;
   name: string;
@@ -42,6 +41,7 @@ export interface Hunt {
   id: string;
   createdAt: string;
   characterId: string | null;
+  activityType: ActivityType;
   duration: string;
   loot: number;
   supplies: number;
@@ -63,6 +63,7 @@ export interface CreateHuntItemPayload {
 
 export interface CreateHuntPayload {
   characterId?: string | null;
+  activityType: ActivityType;
   duration: string;
   loot: number;
   supplies: number;
@@ -82,7 +83,13 @@ export interface RegisterPayload extends LoginPayload {
   name: string;
 }
 
-/** Dados de um personagem vindos da TibiaData API (antes de salvar). */
+export interface UpdateAccountPayload {
+  name: string;
+  email: string;
+  currentPassword?: string;
+  newPassword?: string;
+}
+
 export interface TibiaCharacterInfo {
   name: string;
   sex: string | null;
