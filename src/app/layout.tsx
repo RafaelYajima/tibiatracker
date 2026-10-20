@@ -24,22 +24,19 @@ export const dynamic = "force-dynamic";
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const user = await getCurrentUser();
-  const showChrome = Boolean(user);
 
   return (
     <html lang="pt-BR" className={inter.variable}>
       <body className="min-h-screen bg-night-950 font-sans text-ink antialiased">
-        {showChrome && <Sidebar user={user!} />}
-        <div className={showChrome ? "min-h-screen pt-16 lg:pl-64 lg:pt-0" : "min-h-screen"}>
-          <main
-            className={
-              showChrome
-                ? "mx-auto w-full max-w-7xl px-4 pb-16 pt-6 sm:px-6 lg:px-10 lg:pt-10"
-                : "mx-auto flex min-h-screen w-full max-w-7xl px-4 sm:px-6 lg:px-10"
-            }
-          >
-            {children}
-          </main>
+        {user && <Sidebar user={user} />}
+        <div className={user ? "min-h-screen pt-16 lg:pl-64 lg:pt-0" : "min-h-screen"}>
+          {user ? (
+            <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-6 sm:px-6 lg:px-10 lg:pt-10">
+              {children}
+            </main>
+          ) : (
+            <>{children}</>
+          )}
         </div>
       </body>
     </html>
