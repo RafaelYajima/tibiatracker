@@ -240,9 +240,6 @@ export function HuntsTable({
                           <span className="text-sm font-bold text-ink">
                             {hunt.title || (Number.isNaN(date.getTime()) ? "—" : format(date, "dd/MM/yyyy HH:mm"))}
                           </span>
-                          {hunt.description && (
-                            <ChevronDown className="h-3 w-3 text-gold-500/60" />
-                          )}
                         </div>
                         <span className="text-[10px] font-medium text-ink-muted/60">
                           {hunt.title ? (Number.isNaN(date.getTime()) ? "—" : format(date, "dd/MM/yyyy HH:mm")) : ""}
