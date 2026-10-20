@@ -5,10 +5,8 @@ import { CircleAlert, History, Plus, RefreshCw } from "lucide-react";
 import { useHunts } from "@/hooks/useHunts";
 import type { ActivityFilterValue } from "@/lib/activity";
 import type { TimeFilter } from "@/lib/time";
-import { ActivityFilter } from "./ActivityFilter";
-import { CharacterFilter } from "./CharacterFilter";
+import { FilterBar } from "./FilterBar";
 import { HuntsTable } from "./HuntsTable";
-import { TimeFilterPills } from "./TimeFilterPills";
 import { EmptyState, GoldLink, OutlineButton, SectionCard, TableSkeleton } from "./ui";
 
 const FILTER_PERIOD: Record<TimeFilter, string> = {
@@ -44,10 +42,15 @@ export function HistoryView() {
         </GoldLink>
       </header>
 
-      <div className="animate-fade-up mt-6 flex flex-col gap-3" style={{ animationDelay: "60ms" }}>
-        <ActivityFilter value={activity} onChange={setActivity} />
-        <TimeFilterPills value={filter} onChange={setFilter} />
-        <CharacterFilter value={characterId} onChange={setCharacterId} />
+      <div className="mt-5">
+        <FilterBar
+          activity={activity}
+          onActivityChange={setActivity}
+          time={filter}
+          onTimeChange={setFilter}
+          character={characterId}
+          onCharacterChange={setCharacterId}
+        />
       </div>
 
       <div className="mt-6">

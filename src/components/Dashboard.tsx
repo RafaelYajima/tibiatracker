@@ -4,16 +4,14 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { CircleAlert, Coins, Gem, Package, Plus, Receipt, RefreshCw, Swords, TrendingUp } from "lucide-react";
 import { useHunts } from "@/hooks/useHunts";
-import { type ActivityFilterValue, getActivityLabel } from "@/lib/activity";
+import { type ActivityFilterValue } from "@/lib/activity";
 import { formatFull, formatGP, formatSignedGP } from "@/lib/format";
 import { profitByDay, summarize, topItems } from "@/lib/stats";
 import { TIME_FILTERS, type TimeFilter } from "@/lib/time";
-import { ActivityFilter } from "./ActivityFilter";
-import { CharacterFilter } from "./CharacterFilter";
+import { FilterBar } from "./FilterBar";
 import { HuntsTable } from "./HuntsTable";
 import { ProfitAreaChart } from "./ProfitAreaChart";
 import { StatCard } from "./StatCard";
-import { TimeFilterPills } from "./TimeFilterPills";
 import { TopItemsBarChart } from "./TopItemsBarChart";
 import { EmptyState, GoldLink, OutlineButton, PanelSkeleton, SectionCard, StatCardSkeleton, TableSkeleton } from "./ui";
 
@@ -38,7 +36,6 @@ export function Dashboard() {
   const filterLabel = TIME_FILTERS.find((f) => f.value === filter)?.label ?? "";
   const profitPositive = summary.profit >= 0;
   const hasData = hunts.length > 0;
-  const activityText = activity === "all" ? "todos os registros" : getActivityLabel(activity).toLowerCase();
 
   return (
     <div>
@@ -50,8 +47,8 @@ export function Dashboard() {
           </h1>
           <p className="mt-1.5 text-sm text-ink-muted">
             {loading
-              ? `Carregando sessões · ${filterLabel}…`
-              : `${summary.sessions} ${summary.sessions === 1 ? "registro" : "registros"} de ${activityText} ${FILTER_PERIOD[filter]}`}
+              ? `Carregando · ${filterLabel}…`
+              : `${summary.sessions} ${summary.sessions === 1 ? "registro" : "registros"} ${FILTER_PERIOD[filter]}`}
           </p>
         </div>
         <GoldLink href="/new" className="shrink-0">
@@ -59,10 +56,15 @@ export function Dashboard() {
         </GoldLink>
       </header>
 
-      <div className="animate-fade-up mt-6 flex flex-col gap-3" style={{ animationDelay: "60ms" }}>
-        <ActivityFilter value={activity} onChange={setActivity} />
-        <TimeFilterPills value={filter} onChange={setFilter} />
-        <CharacterFilter value={characterId} onChange={setCharacterId} />
+      <div className="mt-5">
+        <FilterBar
+          activity={activity}
+          onActivityChange={setActivity}
+          time={filter}
+          onTimeChange={setFilter}
+          character={characterId}
+          onCharacterChange={setCharacterId}
+        />
       </div>
 
       {error ? (
@@ -101,7 +103,7 @@ export function Dashboard() {
             <StatCard
               label="Profit Total"
               value={formatSignedGP(summary.profit)}
-              sub={`${formatFull(summary.profit)} gp de balance`}
+              sub={`${formatFull(summary.profit)} gp`}
               icon={Coins}
               tone={profitPositive ? "green" : "red"}
               valueClassName={profitPositive ? "text-green-400" : "text-red-400"}
@@ -139,32 +141,14 @@ export function Dashboard() {
           {hasData ? (
             <>
               <div className="mt-6 grid gap-6 lg:grid-cols-5">
-                <SectionCard
-                  className="lg:col-span-3"
-                  title="Profit por dia"
-                  subtitle="Balance somado por dia no período selecionado"
-                  icon={TrendingUp}
-                  contentClassName="p-2 sm:p-4"
-                  delay={320}
-                >
+                <SectionCard className="lg:col-span-3" title="Profit por dia" subtitle="Balance somado por dia no período" icon={TrendingUp} contentClassName="p-2 sm:p-4" delay={320}>
                   <ProfitAreaChart data={dayData} />
                 </SectionCard>
-                <SectionCard
-                  className="lg:col-span-2"
-                  title="Top Itens"
-                  subtitle="Top 8 por quantidade no período atual"
-                  icon={Package}
-                  contentClassName="p-2 sm:p-4"
-                  delay={380}
-                >
+                <SectionCard className="lg:col-span-2" title="Top Itens" subtitle="Top 8 por quantidade no período" icon={Package} contentClassName="p-2 sm:p-4" delay={380}>
                   {items.length > 0 ? (
                     <TopItemsBarChart data={items} />
                   ) : (
-                    <EmptyState
-                      icon={Package}
-                      title="Sem itens registrados"
-                      message="Os registros deste período não têm itens listados no texto do Hunt Analyser."
-                    />
+                    <EmptyState icon={Package} title="Sem itens registrados" message="Os registros deste período não têm itens listados." />
                   )}
                 </SectionCard>
               </div>
@@ -172,7 +156,7 @@ export function Dashboard() {
               <SectionCard
                 className="mt-6"
                 title="Últimos Registros"
-                subtitle="As 10 sessões mais recentes do período"
+                subtitle="As 10 sessões mais recentes"
                 icon={Swords}
                 contentClassName="p-0"
                 delay={440}
@@ -191,7 +175,7 @@ export function Dashboard() {
                 <EmptyState
                   icon={Swords}
                   title={`Nenhum registro ${FILTER_PERIOD[filter]}`}
-                  message="Cadastre um lucro de hunt ou uma rotação de bosses para começar a montar seu histórico."
+                  message="Cadastre um lucro de hunt ou uma rotação de bosses para começar."
                   action={<GoldLink href="/new">Criar primeiro registro</GoldLink>}
                 />
               </SectionCard>
