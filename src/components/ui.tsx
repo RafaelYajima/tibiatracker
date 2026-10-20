@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
@@ -145,6 +146,35 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
             <div className="h-3 w-16 rounded bg-night-750" />
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-lg animate-fade-up rounded-2xl border border-night-700 bg-night-850 p-6 shadow-2xl">
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-ink">{title}</h2>
+          <button onClick={onClose} className="text-ink-muted hover:text-ink">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        {children}
       </div>
     </div>
   );

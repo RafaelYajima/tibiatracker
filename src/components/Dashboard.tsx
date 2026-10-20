@@ -166,7 +166,7 @@ export function Dashboard() {
                   </Link>
                 }
               >
-                <HuntsTable hunts={hunts.slice(0, 10)} />
+                <HuntsTable hunts={hunts.slice(0, 10)} onRefresh={refetch} />
               </SectionCard>
             </>
           ) : (

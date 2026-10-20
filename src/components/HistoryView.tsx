@@ -77,7 +77,7 @@ export function HistoryView() {
             contentClassName="p-0"
             delay={120}
           >
-            <HuntsTable hunts={hunts} expandable paginated pageSize={12} />
+            <HuntsTable hunts={hunts} expandable paginated pageSize={12} onRefresh={refetch} />
           </SectionCard>
         )}
       </div>
