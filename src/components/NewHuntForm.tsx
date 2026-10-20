@@ -100,6 +100,8 @@ function ParsedPreview({ parsed }: { parsed: ParsedHunt }) {
 export function NewHuntForm() {
   const router = useRouter();
   const [text, setText] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [characterId, setCharacterId] = useState<string | null>(null);
   const [activityType, setActivityType] = useState<ActivityType>("boss_rotation");
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -120,6 +122,8 @@ export function NewHuntForm() {
         body: JSON.stringify({
           characterId,
           activityType,
+          title: title.trim() || null,
+          description: description.trim() || null,
           duration: parsed.session,
           loot: parsed.loot,
           supplies: parsed.supplies,
@@ -222,7 +226,32 @@ export function NewHuntForm() {
         </SectionCard>
       </div>
 
-      <SectionCard className="mt-6" title="Personagem" subtitle="A qual boneco pertencem esses ganhos? O profit fica organizado por char." icon={UserRound} contentClassName="p-4 sm:p-5" delay={180}>
+      <SectionCard className="mt-6" title="Informações do Registro" subtitle="Adicione um título e descrição para identificar esta sessão" icon={ClipboardList} contentClassName="p-4 sm:p-5" delay={160}>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-ink-muted">Título (opcional)</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ex: Rotação GT de Terça"
+              className="w-full rounded-lg border border-night-700 bg-night-950/80 px-4 py-2.5 text-sm text-ink placeholder:text-ink-muted/45 focus:border-gold-500/50 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-ink-muted">Descrição (opcional)</label>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Ex: Time completo, loot bom"
+              className="w-full rounded-lg border border-night-700 bg-night-950/80 px-4 py-2.5 text-sm text-ink placeholder:text-ink-muted/45 focus:border-gold-500/50 focus:outline-none"
+            />
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard className="mt-6" title="Personagem" subtitle="A qual boneco pertencem esses ganhos? O profit fica organizado por char." icon={UserRound} contentClassName="p-4 sm:p-5" delay={200}>
         <CharacterPicker value={characterId} onChange={setCharacterId} />
       </SectionCard>
 

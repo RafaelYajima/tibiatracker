@@ -3,9 +3,11 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import {
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock,
+  FileText,
   Package,
   Sparkles,
   Swords,
@@ -120,17 +122,29 @@ export function HuntsTable({ hunts, expandable = false, paginated = false, pageS
                         <ChevronRight className={`h-4 w-4 text-ink-muted transition-transform duration-200 ${expanded ? "rotate-90 text-gold-400" : ""}`} />
                       </td>
                     )}
-                    <td className="whitespace-nowrap px-4 py-3.5 text-xs font-medium text-ink">
-                      {Number.isNaN(date.getTime()) ? "—" : format(date, "dd/MM/yyyy HH:mm")}
-                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                        <span className="inline-flex rounded-full border border-gold-500/20 bg-gold-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-gold-300">
-                          {getActivityShortLabel(hunt.activityType)}
-                        </span>
-                        {hunt.character && (
-                          <span className="inline-flex rounded-full border border-night-700 bg-night-800 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-ink-muted">
-                            {hunt.character.name}
+                    <td className="whitespace-nowrap px-4 py-3.5">
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-ink">
+                            {hunt.title || (Number.isNaN(date.getTime()) ? "—" : format(date, "dd/MM/yyyy HH:mm"))}
                           </span>
-                        )}
+                          {hunt.description && (
+                            <ChevronDown className="h-3 w-3 text-gold-500/60" />
+                          )}
+                        </div>
+                        <span className="text-[10px] font-medium text-ink-muted/60">
+                          {hunt.title ? (Number.isNaN(date.getTime()) ? "—" : format(date, "dd/MM/yyyy HH:mm")) : ""}
+                        </span>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                          <span className="inline-flex rounded-full border border-gold-500/20 bg-gold-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-gold-300">
+                            {getActivityShortLabel(hunt.activityType)}
+                          </span>
+                          {hunt.character && (
+                            <span className="inline-flex rounded-full border border-night-700 bg-night-800 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                              {hunt.character.name}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5">
@@ -147,6 +161,15 @@ export function HuntsTable({ hunts, expandable = false, paginated = false, pageS
                   {expanded && (
                     <tr className="border-b border-night-700/60 bg-night-900/50">
                       <td colSpan={colCount} className="px-5 py-4">
+                        {hunt.description && (
+                          <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-gold-500/15 bg-gold-500/5 p-3">
+                            <FileText className="mt-0.5 h-3.5 w-3.5 text-gold-400" />
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-gold-500/80">Descrição</p>
+                              <p className="mt-0.5 text-xs text-ink/90">{hunt.description}</p>
+                            </div>
+                          </div>
+                        )}
                         {hunt.items.length > 0 ? (
                           <div className="flex flex-wrap gap-1.5">
                             {hunt.items.map((item) => (

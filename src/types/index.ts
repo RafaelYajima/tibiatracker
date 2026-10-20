@@ -42,6 +42,8 @@ export interface Hunt {
   createdAt: string;
   characterId: string | null;
   activityType: ActivityType;
+  title: string | null;
+  description: string | null;
   duration: string;
   loot: number;
   supplies: number;
@@ -64,6 +66,8 @@ export interface CreateHuntItemPayload {
 export interface CreateHuntPayload {
   characterId?: string | null;
   activityType: ActivityType;
+  title?: string;
+  description?: string;
   duration: string;
   loot: number;
   supplies: number;

@@ -58,6 +58,8 @@ export const hunts = pgTable(
     balance: integer("balance").notNull().default(0),
     xpGain: integer("xp_gain").notNull().default(0),
     xpPerHour: integer("xp_per_hour").notNull().default(0),
+    title: text("title"),
+    description: text("description"),
     rawText: text("raw_text"),
   },
   (t) => [
