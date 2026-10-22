@@ -61,13 +61,20 @@ export function getValueTier(maxGp: number): ValueTier {
   return "godlike";
 }
 
-/** Parseia strings tipo "90,000 - 150,000" ou "10,000" e retorna o valor máximo. */
+/**
+ * Parseia strings tipo "25,000 - 50,000" ou "90,000 - 150,000" e retorna o valor máximo.
+ * Trata vírgulas como separadores de milhar (padrão US do TibiaWiki).
+ */
 function parseValueRange(raw: string | null | undefined, npcValue: number): number {
   if (!raw) return npcValue;
-  const cleaned = raw.replace(/[^\d\-\.]/g, " ").trim();
-  const parts = cleaned.split(/\s+/).map(Number).filter(Number.isFinite);
-  if (parts.length === 0) return npcValue;
-  return Math.max(...parts, npcValue);
+  // Remove separadores de milhar: "25,000" → "25000"
+  const withoutThousands = raw.replace(/(\d)[,.](\d{3})/g, "$1$2");
+  // Extrai todos os números inteiros positivos
+  const nums = [...withoutThousands.matchAll(/\d+/g)]
+    .map((m) => parseInt(m[0], 10))
+    .filter((n) => n > 0);
+  if (nums.length === 0) return npcValue;
+  return Math.max(...nums, npcValue);
 }
 
 function creatureSlug(name: string): string {
