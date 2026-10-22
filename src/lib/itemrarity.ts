@@ -54,7 +54,7 @@ const itemValueCache = new Map<string, { marketValueMax: number; valueTier: Valu
 /** Calcula o tier de valor a partir do preço máximo estimado (gp). */
 export function getValueTier(maxGp: number): ValueTier {
   if (maxGp <= 0) return "unknown";
-  if (maxGp < 100) return "trash";
+  if (maxGp < 1_000) return "trash";
   if (maxGp < 10_000) return "low";
   if (maxGp < 100_000) return "medium";
   if (maxGp < 1_000_000) return "high";
