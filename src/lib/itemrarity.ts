@@ -34,6 +34,9 @@ export interface ItemWithRarity {
   qty: number;
   rarity: ItemRarity;
   chance: string | null;
+  /** Preço NPC fixo (garantido pela API). */
+  npcPrice: number;
+  /** Valor usado para tier: npcPrice ou preço customizado pelo usuário. */
   marketValueMax: number;
   valueTier: ValueTier;
   marketable: boolean;
@@ -49,7 +52,7 @@ const BASE = "https://tibiadata.bytewizards.de/api/v1";
 const TIMEOUT_MS = 8_000;
 
 const creatureCache = new Map<string, CreatureLootEntry[]>();
-const itemValueCache = new Map<string, { marketValueMax: number; valueTier: ValueTier; marketable: boolean }>();
+const itemValueCache = new Map<string, { marketValueMax: number; npcPrice: number; valueTier: ValueTier; marketable: boolean }>();
 
 /** Calcula o tier de valor a partir do preço máximo estimado (gp). */
 export function getValueTier(maxGp: number): ValueTier {
@@ -118,7 +121,7 @@ async function fetchItemValue(itemName: string) {
   const key = itemName.toLowerCase();
   if (itemValueCache.has(key)) return itemValueCache.get(key)!;
 
-  const fallback = { marketValueMax: 0, valueTier: "unknown" as ValueTier, marketable: false };
+  const fallback = { marketValueMax: 0, npcPrice: 0, valueTier: "unknown" as ValueTier, marketable: false };
   try {
     const url = `${BASE}/items/${encodeURIComponent(itemName)}`;
     const res = await fetch(url, {
@@ -129,12 +132,13 @@ async function fetchItemValue(itemName: string) {
     if (!res.ok) { itemValueCache.set(key, fallback); return fallback; }
 
     const data = await res.json();
-    const npcValue = typeof data.npcValue === "number" ? data.npcValue : 0;
+    const npcPrice = typeof data.npcValue === "number" ? data.npcValue : 0;
     const marketable = data.marketable === "yes" || data.marketable === true;
-    const marketValueMax = parseValueRange(data.value, npcValue);
+    // Valor = apenas o NPC price fixo; itens sem NPC = 0 até o usuário definir
+    const marketValueMax = npcPrice;
     const valueTier = getValueTier(marketValueMax);
 
-    const result = { marketValueMax, valueTier, marketable };
+    const result = { marketValueMax, npcPrice, valueTier, marketable };
     itemValueCache.set(key, result);
     return result;
   } catch {
@@ -191,6 +195,7 @@ export async function enrichItemsWithRarity(
         ...item,
         rarity: rarityData.rarity,
         chance: rarityData.chance,
+        npcPrice: valueData.npcPrice,
         marketValueMax: valueData.marketValueMax,
         valueTier: valueData.valueTier,
         marketable: valueData.marketable,

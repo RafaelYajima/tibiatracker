@@ -85,6 +85,27 @@ export const huntItems = pgTable(
   (t) => [index("hunt_items_hunt_id_idx").on(t.huntId), index("hunt_items_name_idx").on(t.name)],
 );
 
+/**
+ * Preços customizados de itens por usuário.
+ * O `npcPrice` vem da API; o `customPrice` é definido manualmente pelo jogador.
+ */
+export const itemPrices = pgTable(
+  "item_prices",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    itemName: text("item_name").notNull(),
+    customPrice: integer("custom_price").notNull().default(0),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("item_prices_user_id_idx").on(t.userId),
+    index("item_prices_item_name_idx").on(t.itemName),
+  ],
+);
+
 export const friendships = pgTable(
   "friendships",
   {
