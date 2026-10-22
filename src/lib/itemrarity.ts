@@ -132,8 +132,17 @@ async function fetchItemValue(itemName: string) {
     if (!res.ok) { itemValueCache.set(key, fallback); return fallback; }
 
     const data = await res.json();
-    const npcPrice = typeof data.npcValue === "number" ? data.npcValue : 0;
+
+    // Correção: npcValue na API é string, precisamos converter.
+    let npcPrice = 0;
+    if (typeof data.npcValue === "number") {
+      npcPrice = data.npcValue;
+    } else if (typeof data.npcValue === "string") {
+      npcPrice = parseInt(data.npcValue.replace(/[^\d]/g, ""), 10) || 0;
+    }
+
     const marketable = data.marketable === "yes" || data.marketable === true;
+
     // Valor = apenas o NPC price fixo; itens sem NPC = 0 até o usuário definir
     const marketValueMax = npcPrice;
     const valueTier = getValueTier(marketValueMax);
