@@ -42,6 +42,8 @@ export interface ParsedHunt {
   supplies: number;
   balance: number;
   items: ParsedItem[];
+  /** Monstros mortos no formato "12x flimsy lost soul" → "Flimsy Lost Soul" */
+  killedCreatures: string[];
 }
 
 /** Chaves que são headers/métricas — nunca viram itens. */
@@ -138,10 +140,10 @@ export function parseHuntAnalyser(text: string): ParsedHunt | null {
   type Section = "header" | "loot" | "supplies" | "looted-items" | "monsters";
   let section: Section = "header";
   const itemMap = new Map<string, number>();
+  const creatureMap = new Map<string, number>();
 
   const addItem = (name: string, qty: number) => {
     if (!name || qty <= 0) return;
-    // Se o item aparece mais de uma vez, soma as quantidades.
     itemMap.set(name, (itemMap.get(name) ?? 0) + qty);
   };
 
@@ -204,8 +206,15 @@ export function parseHuntAnalyser(text: string): ParsedHunt | null {
       continue;
     }
 
-    // Lista de monstros mortos — ignorada por completo.
-    if (section === "monsters") continue;
+    // Lista de monstros mortos — extrai nomes para usar na busca de raridade.
+    if (section === "monsters") {
+      const m = line.match(RE_ITEM_QTYX);
+      if (m) {
+        const creatureName = smartTitleCase(m[2].trim());
+        creatureMap.set(creatureName, (creatureMap.get(creatureName) ?? 0) + parseNumber(m[1]));
+      }
+      continue;
+    }
 
     // Seção real do client: "Nx [a/an] nome do item"
     if (section === "looted-items") {
@@ -242,5 +251,6 @@ export function parseHuntAnalyser(text: string): ParsedHunt | null {
     supplies,
     balance,
     items: Array.from(itemMap.entries()).map(([name, qty]) => ({ name, qty })),
+    killedCreatures: Array.from(creatureMap.keys()),
   };
 }

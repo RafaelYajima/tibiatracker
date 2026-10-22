@@ -84,6 +84,7 @@ export async function GET(req: NextRequest) {
       xpPerHour: h.xpPerHour,
       title: h.title,
       description: h.description,
+      killedCreatures: h.killedCreatures ? h.killedCreatures.split(",").filter(Boolean) : [],
       rawText: h.rawText,
       items: itemsByHunt.get(h.id) ?? [],
       character: h.characterId ? (characterById.get(h.characterId) ?? null) : null,
@@ -152,6 +153,9 @@ export async function POST(req: NextRequest) {
         characterId,
         title: typeof body.title === "string" ? body.title.trim() : null,
         description: typeof body.description === "string" ? body.description.trim() : null,
+        killedCreatures: Array.isArray(body.killedCreatures) && body.killedCreatures.length > 0
+          ? body.killedCreatures.slice(0, 50).join(",")
+          : null,
         duration,
         loot: toInt(body.loot),
         supplies: toInt(body.supplies),
@@ -184,6 +188,7 @@ export async function POST(req: NextRequest) {
       xpPerHour: inserted.xpPerHour,
       title: inserted.title,
       description: inserted.description,
+      killedCreatures: inserted.killedCreatures ? inserted.killedCreatures.split(",").filter(Boolean) : [],
       rawText: inserted.rawText,
       items: savedItems,
       character,

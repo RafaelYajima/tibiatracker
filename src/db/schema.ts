@@ -60,6 +60,8 @@ export const hunts = pgTable(
     xpPerHour: integer("xp_per_hour").notNull().default(0),
     title: text("title"),
     description: text("description"),
+    /** Monstros mortos na sessão, separados por vírgula. Ex: "Flimsy Lost Soul,Scorpion" */
+    killedCreatures: text("killed_creatures"),
     rawText: text("raw_text"),
   },
   (t) => [

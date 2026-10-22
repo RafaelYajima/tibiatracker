@@ -26,6 +26,7 @@ import { formatFull, formatGP, formatSignedGP } from "@/lib/format";
 import type { HuntWithItems } from "@/types";
 import { EmptyState, GoldButton, GoldLink, OutlineButton } from "./ui";
 import { Modal } from "./Modal";
+import { HuntItemsWithRarity } from "./HuntItemsWithRarity";
 
 interface HuntsTableProps {
   hunts: HuntWithItems[];
@@ -279,20 +280,11 @@ export function HuntsTable({
                             </div>
                           </div>
                         )}
-                        {hunt.items.length > 0 ? (
-                          <div className="flex flex-wrap gap-1.5">
-                            {hunt.items.map((item) => (
-                              <span key={item.id} className="inline-flex items-center gap-1.5 rounded-md border border-night-700 bg-night-800 px-2 py-1 text-[11px]">
-                                <span className="text-ink">{item.name}</span>
-                                <span className="font-extrabold text-gold-400">{formatFull(item.qty)}×</span>
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="flex items-center gap-2 text-[11px] text-ink-muted">
-                            <Package className="h-3.5 w-3.5" /> Nenhum item registrado nesta sessão.
-                          </p>
-                        )}
+                        <HuntItemsWithRarity
+                          huntId={hunt.id}
+                          items={hunt.items.map(i => ({ name: i.name, qty: i.qty }))}
+                          creatures={hunt.killedCreatures ?? []}
+                        />
                         <div className="mt-3 flex flex-wrap items-center justify-between gap-4 border-t border-night-700/50 pt-3">
                           <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px] text-ink-muted/90">
                             <span className="inline-flex items-center gap-1.5">

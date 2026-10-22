@@ -124,6 +124,7 @@ export function NewHuntForm() {
           activityType,
           title: title.trim() || null,
           description: description.trim() || null,
+          killedCreatures: parsed.killedCreatures,
           duration: parsed.session,
           loot: parsed.loot,
           supplies: parsed.supplies,
