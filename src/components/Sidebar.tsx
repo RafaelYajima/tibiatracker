@@ -23,6 +23,7 @@ const NAV_ITEMS = [
   { href: "/new", label: "Novo Registro", icon: ClipboardPaste },
   { href: "/history", label: "Histórico", icon: History },
   { href: "/characters", label: "Personagens", icon: Users },
+  { href: "/friends", label: "Amigos", icon: Users },
   { href: "/profile", label: "Perfil", icon: Settings },
 ] as const;
 

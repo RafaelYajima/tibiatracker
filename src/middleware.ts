@@ -13,7 +13,7 @@ const PUBLIC_API = new Set([
  * Proteção rápida por cookie para páginas e APIs privadas.
  * A validação real da sessão continua no servidor, consultando o banco.
  */
-export function proxy(req: NextRequest) {
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hasSessionCookie = Boolean(req.cookies.get(SESSION_COOKIE_NAME)?.value);
 

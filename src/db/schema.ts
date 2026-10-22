@@ -83,6 +83,25 @@ export const huntItems = pgTable(
   (t) => [index("hunt_items_hunt_id_idx").on(t.huntId), index("hunt_items_name_idx").on(t.name)],
 );
 
+export const friendships = pgTable(
+  "friendships",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    friendId: uuid("friend_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: text("status").notNull().default("pending"), // 'pending' | 'accepted'
+  },
+  (t) => [
+    index("friendships_user_id_idx").on(t.userId),
+    index("friendships_friend_id_idx").on(t.friendId),
+  ],
+);
+
 export type UserRow = typeof users.$inferSelect;
 export type NewUserRow = typeof users.$inferInsert;
 export type SessionRow = typeof sessions.$inferSelect;

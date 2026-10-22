@@ -105,3 +105,18 @@ export interface TibiaCharacterInfo {
   lastLogin: string | null;
   accountStatus: string | null;
 }
+
+export interface UserSummary {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface Friendship {
+  id: string;
+  createdAt: string;
+  userId: string;
+  friendId: string;
+  status: "pending" | "accepted";
+  friend?: UserSummary;
+}
