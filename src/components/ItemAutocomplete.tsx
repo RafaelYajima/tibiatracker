@@ -36,7 +36,7 @@ export function ItemAutocomplete({ value, onChange, placeholder = "Buscar item..
       return;
     }
 
-    const timer = setTimeout(async () => {
+    const timer = setTimeout(async () => { // 180ms de delay
       setLoading(true);
       try {
         const res = await fetch(`/api/items/search?q=${encodeURIComponent(value.trim())}`);
@@ -52,7 +52,7 @@ export function ItemAutocomplete({ value, onChange, placeholder = "Buscar item..
       } finally {
         setLoading(false);
       }
-    }, 300);
+    }, 180);
 
     return () => clearTimeout(timer);
   }, [value]);

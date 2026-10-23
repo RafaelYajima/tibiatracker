@@ -4,6 +4,39 @@ import { db } from "@/db";
 import { clanItemPrices, clanMembers } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 
+/** DELETE /api/clans/:id/prices — remove o preço de um item (owner ou admin). */
+export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+
+    const { id: clanId } = await ctx.params;
+    const body = await req.json();
+    const itemName = typeof body.itemName === "string" ? body.itemName.trim() : "";
+
+    if (!itemName) return NextResponse.json({ error: "Nome do item é obrigatório." }, { status: 400 });
+
+    const membership = await db
+      .select()
+      .from(clanMembers)
+      .where(and(eq(clanMembers.clanId, clanId), eq(clanMembers.userId, user.id)))
+      .limit(1);
+
+    if (membership.length === 0 || !["owner", "admin"].includes(membership[0].role)) {
+      return NextResponse.json({ error: "Apenas owner ou admin podem remover preços." }, { status: 403 });
+    }
+
+    await db
+      .delete(clanItemPrices)
+      .where(and(eq(clanItemPrices.clanId, clanId), eq(clanItemPrices.itemName, itemName)));
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("[DELETE /api/clans/:id/prices]", error);
+    return NextResponse.json({ error: "Falha ao remover preço." }, { status: 500 });
+  }
+}
+
 export const dynamic = "force-dynamic";
 
 /** GET /api/clans/:id/prices?names=Silver Token,Gold Token
