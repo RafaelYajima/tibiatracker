@@ -48,6 +48,7 @@ export function ProfileView({ user }: { user: AuthUser }) {
   const [email, setEmail] = useState(user.email);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [useClanPrices, setUseClanPrices] = useState(user.useClanPrices ?? false);
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -62,7 +63,7 @@ export function ProfileView({ user }: { user: AuthUser }) {
       const res = await fetch("/api/account", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, currentPassword, newPassword }),
+        body: JSON.stringify({ name, email, currentPassword, newPassword, useClanPrices }),
       });
       const data = (await res.json()) as { error?: string; user?: AuthUser };
       if (!res.ok) {
@@ -133,6 +134,21 @@ export function ProfileView({ user }: { user: AuthUser }) {
             autoComplete="new-password"
             icon={Lock}
           />
+
+          <div className="md:col-span-2 mt-2">
+            <label className="flex items-center gap-3 rounded-xl border border-night-700 bg-night-900/40 p-4 cursor-pointer hover:border-gold-500/30 transition-colors">
+              <input
+                type="checkbox"
+                checked={useClanPrices}
+                onChange={(e) => setUseClanPrices(e.target.checked)}
+                className="h-5 w-5 rounded border-night-700 bg-night-950 text-gold-500 focus:ring-gold-500/50"
+              />
+              <div>
+                <p className="text-sm font-bold text-ink">Usar preços do clã</p>
+                <p className="text-xs text-ink-muted">Se ativado, os registros vão ignorar seus preços customizados e usar a tabela de preços do seu clã.</p>
+              </div>
+            </label>
+          </div>
 
           <div className="md:col-span-2">
             {error && <p className="mb-3 text-sm font-semibold text-red-400">{error}</p>}

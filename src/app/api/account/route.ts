@@ -34,6 +34,7 @@ export async function PATCH(req: NextRequest) {
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const currentPassword = typeof body.currentPassword === "string" ? body.currentPassword : "";
     const newPassword = typeof body.newPassword === "string" ? body.newPassword : "";
+    const useClanPrices = typeof body.useClanPrices === "boolean" ? body.useClanPrices : false;
 
     if (name.length < 2 || name.length > 40) {
       return NextResponse.json({ error: "Nome deve ter entre 2 e 40 caracteres." }, { status: 400 });
@@ -73,6 +74,7 @@ export async function PATCH(req: NextRequest) {
         name,
         email,
         passwordHash: passwordChanged ? hashPassword(newPassword) : currentUserRow.passwordHash,
+        useClanPrices,
       })
       .where(eq(users.id, currentUserRow.id))
       .returning();

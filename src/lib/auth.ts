@@ -14,6 +14,7 @@ function normalizeUser(row: typeof users.$inferSelect): AuthUser {
     createdAt: row.createdAt.toISOString(),
     name: row.name,
     email: row.email,
+    useClanPrices: row.useClanPrices,
   };
 }
 

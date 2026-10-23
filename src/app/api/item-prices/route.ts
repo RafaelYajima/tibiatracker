@@ -1,33 +1,56 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { itemPrices } from "@/db/schema";
+import { clanItemPrices, clanMembers, itemPrices } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 /** GET /api/item-prices?names=Silver Token,Gold Token
- *  Retorna preços customizados do usuário para os itens pedidos. */
+ *  Retorna preços customizados. Se o usuário ativou useClanPrices e está num clã,
+ *  traz os preços do clã. Senão, traz os pessoais. */
 export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
 
     const namesParam = req.nextUrl.searchParams.get("names") ?? "";
-    const names = namesParam.split(",").map(n => n.trim()).filter(Boolean);
+    const names = namesParam.split(",").map((n) => n.trim()).filter(Boolean);
     if (names.length === 0) return NextResponse.json({ prices: {} });
 
+    const prices: Record<string, number> = {};
+
+    if (user.useClanPrices) {
+      const myMembership = await db
+        .select()
+        .from(clanMembers)
+        .where(eq(clanMembers.userId, user.id))
+        .limit(1);
+
+      if (myMembership.length > 0) {
+        const rows = await db
+          .select()
+          .from(clanItemPrices)
+          .where(and(eq(clanItemPrices.clanId, myMembership[0].clanId), inArray(clanItemPrices.itemName, names)));
+        
+        for (const row of rows) {
+          prices[row.itemName] = row.price;
+        }
+        return NextResponse.json({ prices, source: "clan" });
+      }
+    }
+
+    // Fallback para preços pessoais
     const rows = await db
       .select()
       .from(itemPrices)
       .where(and(eq(itemPrices.userId, user.id), inArray(itemPrices.itemName, names)));
 
-    const prices: Record<string, number> = {};
     for (const row of rows) {
       prices[row.itemName] = row.customPrice;
     }
 
-    return NextResponse.json({ prices });
+    return NextResponse.json({ prices, source: "personal" });
   } catch (error) {
     console.error("[GET /api/item-prices]", error);
     return NextResponse.json({ error: "Falha ao carregar preços." }, { status: 500 });

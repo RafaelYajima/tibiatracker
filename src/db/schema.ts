@@ -1,4 +1,4 @@
-import { index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const users = pgTable(
   "users",
@@ -8,6 +8,7 @@ export const users = pgTable(
     name: text("name").notNull(),
     email: text("email").notNull().unique(),
     passwordHash: text("password_hash").notNull(),
+    useClanPrices: boolean("use_clan_prices").notNull().default(false),
   },
   (t) => [index("users_email_idx").on(t.email)],
 );

@@ -51,6 +51,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Nome do clã deve ter entre 2 e 40 caracteres." }, { status: 400 });
     }
 
+    const existingMembership = await db.select().from(clanMembers).where(eq(clanMembers.userId, user.id)).limit(1);
+    if (existingMembership.length > 0) {
+      return NextResponse.json({ error: "Você já participa de um clã. Saia dele antes de criar outro." }, { status: 403 });
+    }
+
     const [clan] = await db
       .insert(clans)
       .values({ name, ownerId: user.id })

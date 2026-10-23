@@ -5,6 +5,7 @@ export interface AuthUser {
   createdAt: string;
   name: string;
   email: string;
+  useClanPrices: boolean;
 }
 
 export interface HuntItem {
@@ -94,6 +95,7 @@ export interface UpdateAccountPayload {
   email: string;
   currentPassword?: string;
   newPassword?: string;
+  useClanPrices?: boolean;
 }
 
 export interface TibiaCharacterInfo {

@@ -40,15 +40,15 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       return NextResponse.json({ error: `Usuário com e-mail "${email}" não encontrado.` }, { status: 404 });
     }
 
-    // Já é membro?
+    // Já está em ALGUM clã?
     const existing = await db
       .select()
       .from(clanMembers)
-      .where(and(eq(clanMembers.clanId, clanId), eq(clanMembers.userId, targetUser.id)))
+      .where(eq(clanMembers.userId, targetUser.id))
       .limit(1);
 
     if (existing.length > 0) {
-      return NextResponse.json({ error: "Usuário já é membro deste clã." }, { status: 409 });
+      return NextResponse.json({ error: "Este usuário já faz parte de um clã." }, { status: 409 });
     }
 
     const [member] = await db
