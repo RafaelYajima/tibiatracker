@@ -10,12 +10,12 @@ export const dynamic = "force-dynamic";
  * GET /api/friends/:userId/stats
  * Retorna um resumo dos dados do amigo (somente se amizade estiver 'accepted').
  */
-export async function GET(req: NextRequest, ctx: { params: Promise<{ userId: string }> }) {
+export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const me = await getCurrentUser();
     if (!me) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
 
-    const { userId } = await ctx.params;
+    const { id: userId } = await ctx.params;
 
     // 1. Verifica se são amigos aceitos
     const friendship = await db

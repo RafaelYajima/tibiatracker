@@ -106,6 +106,65 @@ export const itemPrices = pgTable(
   ],
 );
 
+/**
+ * Clã/grupo para preços compartilhados e organização de time.
+ */
+export const clans = pgTable(
+  "clans",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    name: text("name").notNull(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (t) => [index("clans_owner_id_idx").on(t.ownerId)],
+);
+
+/**
+ * Membros de um clã. role: 'owner' | 'admin' | 'member'
+ */
+export const clanMembers = pgTable(
+  "clan_members",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    clanId: uuid("clan_id")
+      .notNull()
+      .references(() => clans.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: text("role").notNull().default("member"),
+  },
+  (t) => [
+    index("clan_members_clan_id_idx").on(t.clanId),
+    index("clan_members_user_id_idx").on(t.userId),
+  ],
+);
+
+/**
+ * Preços de itens definidos no clã — compartilhados entre todos os membros.
+ * Qualquer admin ou owner pode editar.
+ */
+export const clanItemPrices = pgTable(
+  "clan_item_prices",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    clanId: uuid("clan_id")
+      .notNull()
+      .references(() => clans.id, { onDelete: "cascade" }),
+    itemName: text("item_name").notNull(),
+    price: integer("price").notNull().default(0),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("clan_item_prices_clan_id_idx").on(t.clanId),
+    index("clan_item_prices_item_name_idx").on(t.itemName),
+  ],
+);
+
 export const friendships = pgTable(
   "friendships",
   {

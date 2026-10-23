@@ -24,6 +24,7 @@ const NAV_ITEMS = [
   { href: "/history", label: "Histórico", icon: History },
   { href: "/characters", label: "Personagens", icon: Users },
   { href: "/friends", label: "Amigos", icon: Users },
+  { href: "/clan", label: "Clã", icon: Swords },
   { href: "/profile", label: "Perfil", icon: Settings },
 ] as const;
 
