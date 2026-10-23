@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
 import { Dashboard } from "@/components/Dashboard";
-import { requireUser } from "@/lib/auth";
+import { LandingPage } from "@/components/LandingPage";
+import { getCurrentUser } from "@/lib/auth";
 
 export const metadata: Metadata = {
-  title: "Dashboard",
+  title: "TibiaTracker — Boss Rotation Profit Tracker",
 };
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
-  await requireUser();
-  return <Dashboard />;
+export default async function HomePage() {
+  const user = await getCurrentUser();
+  
+  if (user) {
+    return <Dashboard />;
+  }
+  
+  return <LandingPage />;
 }

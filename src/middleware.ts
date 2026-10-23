@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE_NAME } from "@/lib/auth-constants";
 
-const PUBLIC_PAGES = new Set(["/login", "/register"]);
+const PUBLIC_PAGES = new Set(["/login", "/register", "/"]);
 const PUBLIC_API = new Set([
   "/api/health",
   "/api/auth/login",
@@ -26,7 +26,8 @@ export function middleware(req: NextRequest) {
   }
 
   if (PUBLIC_PAGES.has(pathname)) {
-    if (hasSessionCookie) {
+    // Se está logado, não deixa acessar login/register, mas permite a home (/)
+    if (hasSessionCookie && pathname !== "/") {
       return NextResponse.redirect(new URL("/", req.url));
     }
     return NextResponse.next();
