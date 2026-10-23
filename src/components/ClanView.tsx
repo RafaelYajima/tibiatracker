@@ -371,14 +371,14 @@ export function ClanView() {
 
       {/* Modal de preço */}
       {showPriceModal && selectedClan && (
-        <Modal isOpen onClose={() => { setShowPriceModal(false); setPriceItemName(""); setPriceValue(0); }} title="Definir Preço do Clã">
+        <Modal isOpen onClose={() => { setShowPriceModal(false); setPriceItemName(""); setPriceValue(0); }} title="Definir Preço do Item">
           <div className="space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-muted">Item (busque em inglês)</label>
               <ItemAutocomplete
                 value={priceItemName}
                 onChange={setPriceItemName}
-                onSelect={(name) => setPriceItemName(name)}
+                placeholder="Ex: Silver Token, Demon Shield..."
               />
             </div>
             <div>
