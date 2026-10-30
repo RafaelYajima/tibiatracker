@@ -131,9 +131,13 @@ export interface BestiaryEntry {
   totalKills: number;
   lastKillAt: string;
   imageUrl: string;
-  occurrence: "Common" | "Uncommon" | "Rare" | "Very Rare" | "Unknown";
   difficulty: string;
-  thresholds: number[];
+  occurrence: string;
+  stages: { stage1: number; stage2: number; stage3: number; charmPoints: number };
+  currentStage: 0 | 1 | 2 | 3;
+  stagePercent: number;
+  killsNeeded: number;
+  nextTarget: number;
 }
 
 export interface HuntSuggestion {

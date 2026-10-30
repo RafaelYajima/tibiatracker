@@ -3,11 +3,11 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { bestiary } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { fetchBestiaryMeta } from "@/lib/bestiary";
+import { fetchBestiaryMeta, getStageProgress } from "@/lib/bestiary";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/bestiary — bestiary do usuário com imagem, ocorrência e thresholds. */
+/** GET /api/bestiary — lista do bestiário do usuário com metadados completos. */
 export async function GET() {
   try {
     const user = await getCurrentUser();
@@ -22,15 +22,21 @@ export async function GET() {
     const result = await Promise.all(
       rows.map(async (r) => {
         const meta = await fetchBestiaryMeta(r.creatureName);
+        const stageInfo = getStageProgress(r.totalKills, meta.stages);
+
         return {
           id: r.id,
           creatureName: r.creatureName,
           totalKills: r.totalKills,
           lastKillAt: r.lastKillAt.toISOString(),
           imageUrl: meta.imageUrl,
-          occurrence: meta.occurrence,
           difficulty: meta.difficulty,
-          thresholds: meta.thresholds,
+          occurrence: meta.occurrence,
+          stages: meta.stages,
+          currentStage: stageInfo.currentStage,
+          stagePercent: stageInfo.percent,
+          killsNeeded: stageInfo.killsNeeded,
+          nextTarget: stageInfo.nextTarget,
         };
       })
     );
