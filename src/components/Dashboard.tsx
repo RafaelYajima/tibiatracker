@@ -24,7 +24,7 @@ const FILTER_PERIOD: Record<TimeFilter, string> = {
 };
 
 export function Dashboard() {
-  const [filter, setFilter] = useState<TimeFilter>("7d");
+  const [filter, setFilter] = useState<TimeFilter>("all");
   const [characterId, setCharacterId] = useState("all");
   const [activity, setActivity] = useState<ActivityFilterValue>("all");
   const { hunts, loading, error, refetch } = useHunts(filter, characterId, activity);
