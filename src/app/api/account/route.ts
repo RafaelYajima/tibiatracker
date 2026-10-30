@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { findUserByEmail, getCurrentUser, hashPassword, verifyPassword } from "@/lib/auth";
+import { destroySession, findUserByEmail, getCurrentUser, hashPassword, verifyPassword } from "@/lib/auth";
 import type { UpdateAccountPayload } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -90,5 +90,31 @@ export async function PATCH(req: NextRequest) {
   } catch (error) {
     console.error("[PATCH /api/account]", error);
     return NextResponse.json({ error: "Falha ao atualizar perfil." }, { status: 500 });
+  }
+}
+
+/** DELETE /api/account — exclui a conta permanentemente (cascade). */
+export async function DELETE(req: NextRequest) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+
+    const body = await req.json().catch(() => ({}));
+    const password = typeof body.password === "string" ? body.password : "";
+
+    const [row] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
+    if (!row) return NextResponse.json({ error: "Conta não encontrada." }, { status: 404 });
+
+    if (!verifyPassword(password, row.passwordHash)) {
+      return NextResponse.json({ error: "Senha incorreta. A exclusão requer confirmação." }, { status: 401 });
+    }
+
+    await db.delete(users).where(eq(users.id, user.id));
+    await destroySession();
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("[DELETE /api/account]", error);
+    return NextResponse.json({ error: "Falha ao excluir conta." }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type ElementType, type FormEvent } from "react";
 import {
+  AlertTriangle,
   CheckCircle2,
   ChevronRight,
   Coins,
@@ -11,10 +12,12 @@ import {
   Mail,
   Save,
   ShieldCheck,
+  Trash2,
   UserRound,
 } from "lucide-react";
 import type { AuthUser } from "@/types";
 import { GoldButton, SectionCard } from "./ui";
+import { Modal } from "./Modal";
 
 function Field({
   label,
@@ -60,6 +63,34 @@ export function ProfileView({ user }: { user: AuthUser }) {
   const [useClanPrices, setUseClanPrices] = useState(user.useClanPrices ?? false);
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function handleDeleteAccount() {
+    if (deleting) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch("/api/account", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: deletePassword }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setDeleteError(d.error ?? "Falha ao excluir.");
+        return;
+      }
+      router.push("/login");
+      router.refresh();
+    } catch {
+      setDeleteError("Erro de conexão.");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -181,6 +212,83 @@ export function ProfileView({ user }: { user: AuthUser }) {
           </GoldButton>
         </div>
       </form>
+
+      {/* Exportar dados */}
+      <div className="mt-12 animate-fade-up space-y-4" style={{ animationDelay: "150ms" }}>
+        <div className="flex items-center gap-2 px-2">
+          <Save className="h-4 w-4 text-gold-500/80" />
+          <h2 className="text-xs font-black uppercase tracking-widest text-ink">Exportar Dados</h2>
+        </div>
+        <div className="rounded-2xl border border-night-700 bg-night-900/40 p-6 flex flex-wrap gap-3">
+          <a href="/api/export?type=hunts&format=csv" download className="inline-flex items-center gap-2 rounded-xl border border-night-700 bg-night-800 px-4 py-2.5 text-xs font-bold text-ink hover:border-gold-500/30 hover:text-gold-300 transition-all">
+            Hunts (CSV)
+          </a>
+          <a href="/api/export?type=hunts&format=json" download className="inline-flex items-center gap-2 rounded-xl border border-night-700 bg-night-800 px-4 py-2.5 text-xs font-bold text-ink hover:border-gold-500/30 hover:text-gold-300 transition-all">
+            Hunts (JSON)
+          </a>
+          <a href="/api/export?type=bestiary&format=csv" download className="inline-flex items-center gap-2 rounded-xl border border-night-700 bg-night-800 px-4 py-2.5 text-xs font-bold text-ink hover:border-gold-500/30 hover:text-gold-300 transition-all">
+            Bestiário (CSV)
+          </a>
+          <a href="/api/export?type=bestiary&format=json" download className="inline-flex items-center gap-2 rounded-xl border border-night-700 bg-night-800 px-4 py-2.5 text-xs font-bold text-ink hover:border-gold-500/30 hover:text-gold-300 transition-all">
+            Bestiário (JSON)
+          </a>
+        </div>
+      </div>
+
+      {/* Zona de perigo */}
+      <div className="mt-12 animate-fade-up space-y-4" style={{ animationDelay: "200ms" }}>
+        <div className="flex items-center gap-2 px-2">
+          <AlertTriangle className="h-4 w-4 text-red-400" />
+          <h2 className="text-xs font-black uppercase tracking-widest text-red-400">Zona de Perigo</h2>
+        </div>
+        <div className="rounded-2xl border border-red-400/15 bg-red-400/5 p-6">
+          <p className="text-sm text-ink-muted mb-4">
+            A exclusão da conta é <strong className="text-red-400">permanente e irreversível</strong>.
+            Todos os seus registros, personagens, bestiário, amizades e configurações serão apagados.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowDeleteModal(true)}
+            className="inline-flex items-center gap-2 rounded-xl border border-red-400/30 bg-red-400/10 px-5 py-3 text-sm font-bold text-red-400 transition-all hover:bg-red-400/20"
+          >
+            <Trash2 className="h-4 w-4" /> Excluir minha conta
+          </button>
+        </div>
+      </div>
+
+      {/* Modal de confirmação de exclusão */}
+      {showDeleteModal && (
+        <Modal isOpen onClose={() => { setShowDeleteModal(false); setDeletePassword(""); setDeleteError(null); }} title="Excluir Conta Permanentemente">
+          <div className="space-y-5">
+            <div className="rounded-xl border border-red-400/20 bg-red-400/5 p-4 flex gap-3 items-start">
+              <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+              <div className="text-sm text-ink-muted leading-relaxed">
+                <p className="font-bold text-red-400 mb-1">Atenção: ação irreversível!</p>
+                <p>Todos os seus dados serão excluídos permanentemente: hunts, personagens, bestiário, amigos, clã e configurações.</p>
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-ink-muted">Digite sua senha para confirmar</label>
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                placeholder="Sua senha atual"
+                className="w-full rounded-xl border border-red-400/20 bg-night-950/80 px-4 py-3 text-sm text-ink focus:border-red-400/50 focus:outline-none"
+              />
+            </div>
+            {deleteError && <p className="text-sm font-bold text-red-400">{deleteError}</p>}
+            <button
+              type="button"
+              onClick={handleDeleteAccount}
+              disabled={!deletePassword || deleting}
+              className="w-full rounded-xl border border-red-400/40 bg-red-500 py-4 text-base font-black uppercase tracking-widest text-white transition-all hover:bg-red-600 disabled:opacity-50"
+            >
+              {deleting ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : "CONFIRMAR EXCLUSÃO DEFINITIVA"}
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

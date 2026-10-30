@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { CircleAlert, Coins, Gem, Package, Plus, Receipt, RefreshCw, Swords, TrendingUp } from "lucide-react";
+import { format } from "date-fns";
+import { ArrowDown, ArrowUp, CircleAlert, Clock, Coins, Gem, Package, Plus, Receipt, RefreshCw, Swords, TrendingUp } from "lucide-react";
 import { useHunts } from "@/hooks/useHunts";
 import { type ActivityFilterValue } from "@/lib/activity";
 import { formatFull, formatGP, formatSignedGP } from "@/lib/format";
@@ -37,6 +38,25 @@ export function Dashboard() {
   const profitPositive = summary.profit >= 0;
   const hasData = hunts.length > 0;
 
+  // Última hunt
+  const lastHunt = hunts.length > 0 ? hunts[0] : null;
+  const lastHuntDate = lastHunt ? new Date(lastHunt.createdAt) : null;
+
+  // Comparativo: profit das últimas 7 days vs 7 days anteriores
+  const weekComparison = useMemo(() => {
+    const now = Date.now();
+    const week = 7 * 24 * 60 * 60 * 1000;
+    const thisWeek = hunts.filter((h) => now - new Date(h.createdAt).getTime() < week);
+    const lastWeek = hunts.filter((h) => {
+      const age = now - new Date(h.createdAt).getTime();
+      return age >= week && age < week * 2;
+    });
+    const thisProfit = thisWeek.reduce((acc, h) => acc + h.balance, 0);
+    const lastProfit = lastWeek.reduce((acc, h) => acc + h.balance, 0);
+    const diff = thisProfit - lastProfit;
+    return { thisProfit, lastProfit, diff, hasBoth: lastWeek.length > 0 };
+  }, [hunts]);
+
   return (
     <div>
       <header className="animate-fade-up flex flex-wrap items-end justify-between gap-4">
@@ -66,6 +86,50 @@ export function Dashboard() {
           onCharacterChange={setCharacterId}
         />
       </div>
+
+      {/* Resumo da última hunt + comparativo */}
+      {!loading && !error && hasData && (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 animate-fade-up" style={{ animationDelay: "80ms" }}>
+          {/* Última hunt */}
+          {lastHunt && (
+            <div className="rounded-2xl border border-night-700 bg-night-900/50 p-5">
+              <p className="text-[10px] font-black uppercase tracking-widest text-ink-muted mb-3">Última Sessão</p>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-ink">{lastHunt.title || "Sem título"}</p>
+                  <p className="mt-0.5 text-[10px] text-ink-muted flex items-center gap-1.5">
+                    <Clock className="h-3 w-3" />
+                    {lastHuntDate && !Number.isNaN(lastHuntDate.getTime()) ? format(lastHuntDate, "dd/MM 'às' HH:mm") : "—"}
+                    {" · "}{lastHunt.duration}
+                  </p>
+                </div>
+                <p className={`text-lg font-black shrink-0 ${lastHunt.balance >= 0 ? "text-green-400" : "text-red-400"}`}>
+                  {formatSignedGP(lastHunt.balance)}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Comparativo semanal */}
+          <div className="rounded-2xl border border-night-700 bg-night-900/50 p-5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-ink-muted mb-3">Esta semana vs anterior</p>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold text-ink">Profit 7 dias: {formatSignedGP(weekComparison.thisProfit)}</p>
+                {weekComparison.hasBoth && (
+                  <p className="mt-0.5 text-[10px] text-ink-muted">Semana passada: {formatSignedGP(weekComparison.lastProfit)}</p>
+                )}
+              </div>
+              {weekComparison.hasBoth && (
+                <div className={`flex items-center gap-1 text-sm font-black ${weekComparison.diff >= 0 ? "text-green-400" : "text-red-400"}`}>
+                  {weekComparison.diff >= 0 ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                  {formatGP(Math.abs(weekComparison.diff))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {error ? (
         <div className="mt-6">

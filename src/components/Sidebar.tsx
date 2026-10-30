@@ -30,6 +30,7 @@ const NAV_ITEMS = [
   { href: "/characters", label: "Personagens", icon: Users },
   { href: "/friends", label: "Amigos", icon: Users2 },
   { href: "/clan", label: "Clã", icon: Swords },
+  { href: "/achievements", label: "Conquistas", icon: Trophy },
   { href: "/profile", label: "Perfil", icon: Settings },
 ] as const;
 

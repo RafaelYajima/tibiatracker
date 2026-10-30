@@ -6,10 +6,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Copy,
   Edit2,
   FileText,
   Loader2,
   Save,
+  Share2,
   Shield,
   Sparkles,
   Swords,
@@ -88,6 +90,15 @@ function HuntDetailsModal({
 }) {
   const d = new Date(hunt.createdAt);
   const pos = hunt.balance >= 0;
+  const [copied, setCopied] = useState(false);
+
+  function handleShare() {
+    const url = `${window.location.origin}/api/hunts/${hunt.id}/share`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
   const killed = extractKilledCreaturesWithQty(hunt.rawText);
 
   return (
@@ -98,12 +109,15 @@ function HuntDetailsModal({
             <h2 className="text-xl font-black text-ink">{hunt.title || "Registro sem título"}</h2>
             <p className="text-xs text-ink-muted">{Number.isNaN(d.getTime()) ? "—" : format(d, "dd/MM/yyyy 'às' HH:mm")}</p>
           </div>
-          <div className="flex gap-2">
-            <button onClick={onEdit} className="p-2 rounded-lg bg-night-800 border border-night-700 text-ink-muted hover:text-gold-400 hover:border-gold-500/30 transition-all"><Edit2 className="h-4 w-4" /></button>
-            <button onClick={onDelete} disabled={deleting} className="p-2 rounded-lg bg-night-800 border border-night-700 text-red-400/60 hover:text-red-400 hover:border-red-500/30 transition-all">
-              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-            </button>
-          </div>
+           <div className="flex gap-2">
+              <button onClick={handleShare} title="Copiar link" className="p-2 rounded-lg bg-night-800 border border-night-700 text-ink-muted hover:text-blue-400 hover:border-blue-500/30 transition-all">
+                {copied ? <Copy className="h-4 w-4 text-green-400" /> : <Share2 className="h-4 w-4" />}
+              </button>
+              <button onClick={onEdit} className="p-2 rounded-lg bg-night-800 border border-night-700 text-ink-muted hover:text-gold-400 hover:border-gold-500/30 transition-all"><Edit2 className="h-4 w-4" /></button>
+              <button onClick={onDelete} disabled={deleting} className="p-2 rounded-lg bg-night-800 border border-night-700 text-red-400/60 hover:text-red-400 hover:border-red-500/30 transition-all">
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              </button>
+           </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

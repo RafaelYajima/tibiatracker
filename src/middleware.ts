@@ -2,12 +2,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE_NAME } from "@/lib/auth-constants";
 
 const PUBLIC_PAGES = new Set(["/login", "/register", "/"]);
-const PUBLIC_API = new Set([
+const PUBLIC_API_EXACT = new Set([
   "/api/health",
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/logout",
 ]);
+/** Prefixos de API pública (para rotas dinâmicas como /api/hunts/:id/share). */
+const PUBLIC_API_PREFIXES = ["/api/hunts/", "/api/auth/"];
 
 /**
  * Proteção rápida por cookie para páginas e APIs privadas.
@@ -18,7 +20,9 @@ export function middleware(req: NextRequest) {
   const hasSessionCookie = Boolean(req.cookies.get(SESSION_COOKIE_NAME)?.value);
 
   if (pathname.startsWith("/api/")) {
-    if (PUBLIC_API.has(pathname)) return NextResponse.next();
+    if (PUBLIC_API_EXACT.has(pathname)) return NextResponse.next();
+    // Rota de share é pública: /api/hunts/UUID/share
+    if (pathname.match(/^\/api\/hunts\/[^/]+\/share$/)) return NextResponse.next();
     if (!hasSessionCookie) {
       return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
     }

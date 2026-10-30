@@ -114,6 +114,11 @@ function BestiaryCard({ entry, delay }: { entry: BestiaryEntry; delay: number })
             <CheckCircle2 className="h-2.5 w-2.5" /> Completo
           </div>
         )}
+        {!isComplete && entry.killsNeeded > 0 && entry.killsNeeded <= Math.ceil(entry.nextTarget * 0.15) && (
+          <div className="absolute right-3 top-3 z-20 flex items-center gap-1 rounded-full bg-purple-500/90 px-2 py-0.5 text-[9px] font-black text-white animate-pulse">
+            ⚡ Quase lá!
+          </div>
+        )}
         <span className="absolute left-3 top-3 z-20 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wider"
           style={{ color: colors.text, background: colors.bg, borderColor: `${colors.bar}30` }}>
           {DIFF_LABEL[diff] ?? diff}
@@ -229,6 +234,8 @@ export function BestiaryView() {
 
   const totalKills = entries.reduce((acc, e) => acc + e.totalKills, 0);
   const completed = entries.filter((e) => e.currentStage === 3).length;
+  const mostKilled = entries.length > 0 ? entries.reduce((a, b) => a.totalKills > b.totalKills ? a : b) : null;
+  const almostDone = entries.filter((e) => e.currentStage < 3 && e.killsNeeded <= Math.ceil(e.nextTarget * 0.15)).length;
 
   return (
     <div className="max-w-6xl mx-auto space-y-7 pb-12">
@@ -257,12 +264,14 @@ export function BestiaryView() {
       ) : (
         <>
           {/* Estatísticas */}
-          <div className="grid gap-3 sm:grid-cols-4 animate-fade-up">
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6 animate-fade-up">
             {[
-              { label: "Criaturas",    value: entries.length,             color: "text-ink" },
-              { label: "Total Kills",  value: formatFull(totalKills),     color: "text-purple-400" },
-              { label: "Completos",    value: completed,                  color: "text-gold-400" },
-              { label: "Em progresso", value: entries.length - completed, color: "text-blue-400" },
+              { label: "Criaturas",      value: entries.length,                       color: "text-ink" },
+              { label: "Total Kills",    value: formatFull(totalKills),               color: "text-purple-400" },
+              { label: "Completos",      value: completed,                            color: "text-gold-400" },
+              { label: "Em progresso",   value: entries.length - completed,           color: "text-blue-400" },
+              { label: "Quase lá!",      value: almostDone,                           color: "text-purple-300" },
+              { label: "Mais caçada",    value: mostKilled?.creatureName ?? "—",      color: "text-ink" },
             ].map(({ label, value, color }) => (
               <div key={label} className="rounded-2xl border border-night-700 bg-night-900/60 p-4">
                 <p className="text-[10px] font-black uppercase tracking-widest text-ink-muted mb-1">{label}</p>
