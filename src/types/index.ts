@@ -124,3 +124,21 @@ export interface Friendship {
   status: "pending" | "accepted";
   friend?: UserSummary;
 }
+
+export interface BestiaryEntry {
+  id: string;
+  creatureName: string;
+  totalKills: number;
+  lastKillAt: string;
+  imageUrl: string;
+}
+
+export interface HuntSuggestion {
+  name: string;
+  level: string;
+  vocation: string[];
+  description: string;
+  difficulty: "Easy" | "Medium" | "Hard" | "Hardcore";
+  exp: "Low" | "Medium" | "High";
+  profit: "Low" | "Medium" | "High";
+}

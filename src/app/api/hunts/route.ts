@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, desc, eq, gte, inArray } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { characters, huntItems, hunts } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
@@ -165,6 +165,45 @@ export async function POST(req: NextRequest) {
         rawText: typeof body.rawText === "string" ? body.rawText : null,
       })
       .returning();
+
+    // Atualiza Bestiary se houver rawText com contagem de kills
+    // O parser já extraiu killedCreatures (nomes), mas precisamos das quantidades.
+    // Vou extrair as quantidades direto do rawText aqui para o Bestiary.
+    if (body.rawText) {
+      const lines = body.rawText.split(/\r?\n/);
+      let inMonstersSection = false;
+      const RE_ITEM_QTYX = /^([\d,]+)\s*x\s+(.+)$/i;
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.toLowerCase().includes("killed monsters:")) {
+          inMonstersSection = true;
+          continue;
+        }
+        if (trimmed.toLowerCase().includes("looted items:")) {
+          inMonstersSection = false;
+          continue;
+        }
+        
+        if (inMonstersSection) {
+          const match = trimmed.match(RE_ITEM_QTYX);
+          if (match) {
+            const qty = parseInt(match[1].replace(/,/g, ""), 10);
+            const name = match[2].trim().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+
+            if (qty > 0) {
+              // Upsert no Bestiary
+              await db.execute(sql`
+                INSERT INTO bestiary (user_id, creature_name, total_kills, last_kill_at)
+                VALUES (${user.id}, ${name}, ${qty}, now())
+                ON CONFLICT (user_id, creature_name) DO UPDATE 
+                SET total_kills = bestiary.total_kills + ${qty}, last_kill_at = now()
+              `);
+            }
+          }
+        }
+      }
+    }
 
     let savedItems: HuntItem[] = [];
     if (items.length > 0) {

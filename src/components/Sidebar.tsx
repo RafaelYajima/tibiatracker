@@ -5,14 +5,17 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   ClipboardPaste,
+  Compass,
   History,
   LayoutDashboard,
   Menu,
   Settings,
   ShieldCheck,
   Swords,
+  Trophy,
   UserRound,
   Users,
+  Users2,
   X,
 } from "lucide-react";
 import type { AuthUser } from "@/types";
@@ -22,8 +25,10 @@ const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/new", label: "Novo Registro", icon: ClipboardPaste },
   { href: "/history", label: "Histórico", icon: History },
+  { href: "/bestiary", label: "Bestiário", icon: Trophy },
+  { href: "/hunts", label: "Guia de Hunts", icon: Compass },
   { href: "/characters", label: "Personagens", icon: Users },
-  { href: "/friends", label: "Amigos", icon: Users },
+  { href: "/friends", label: "Amigos", icon: Users2 },
   { href: "/clan", label: "Clã", icon: Swords },
   { href: "/profile", label: "Perfil", icon: Settings },
 ] as const;

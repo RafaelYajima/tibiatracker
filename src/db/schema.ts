@@ -166,6 +166,26 @@ export const clanItemPrices = pgTable(
   ],
 );
 
+/**
+ * Bestiary acumulado por usuário.
+ */
+export const bestiary = pgTable(
+  "bestiary",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    creatureName: text("creature_name").notNull(),
+    totalKills: integer("total_kills").notNull().default(0),
+    lastKillAt: timestamp("last_kill_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("bestiary_user_id_idx").on(t.userId),
+    index("bestiary_creature_name_idx").on(t.creatureName),
+  ],
+);
+
 export const friendships = pgTable(
   "friendships",
   {

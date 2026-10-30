@@ -1,13 +1,13 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { format } from "date-fns";
 import {
   Calendar,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock,
+  Coins,
   Edit2,
   FileText,
   Loader2,
@@ -30,12 +30,93 @@ import { HuntItemsWithRarity } from "./HuntItemsWithRarity";
 
 interface HuntsTableProps {
   hunts: HuntWithItems[];
-  expandable?: boolean;
+  expandable?: boolean; // Mantido por compatibilidade, mas agora abre modal
   paginated?: boolean;
   pageSize?: number;
   onRefresh?: () => void;
 }
 
+/* ─────────────────────────── Detalhes da Hunt (Modal) ─────────────────────────── */
+function HuntDetailsModal({
+  hunt,
+  onClose,
+  onEdit,
+  onDelete,
+  deleting,
+}: {
+  hunt: HuntWithItems;
+  onClose: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  deleting: boolean;
+}) {
+  const d = new Date(hunt.createdAt);
+  const pos = hunt.balance >= 0;
+
+  return (
+    <Modal isOpen onClose={onClose} title="Detalhes do Registro">
+      <div className="space-y-6">
+        {/* Header do Modal */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-night-700/50 pb-4">
+           <div>
+              <h2 className="text-xl font-black text-ink">{hunt.title || "Registro sem título"}</h2>
+              <p className="text-xs text-ink-muted">{Number.isNaN(d.getTime()) ? "—" : format(d, "dd/MM/yyyy 'às' HH:mm")}</p>
+           </div>
+           <div className="flex gap-2">
+              <button onClick={onEdit} className="p-2 rounded-lg bg-night-800 border border-night-700 text-ink-muted hover:text-gold-400 hover:border-gold-500/30 transition-all"><Edit2 className="h-4 w-4" /></button>
+              <button onClick={onDelete} disabled={deleting} className="p-2 rounded-lg bg-night-800 border border-night-700 text-red-400/60 hover:text-red-400 hover:border-red-500/30 transition-all">
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              </button>
+           </div>
+        </div>
+
+        {/* Stats de Resumo */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+           <div className="p-3 rounded-xl bg-night-900/60 border border-night-700/50">
+              <p className="text-[9px] font-bold text-ink-muted uppercase mb-1">Profit</p>
+              <p className={`text-sm font-black ${pos ? "text-green-400" : "text-red-400"}`}>{formatSignedGP(hunt.balance)}</p>
+           </div>
+           <div className="p-3 rounded-xl bg-night-900/60 border border-night-700/50">
+              <p className="text-[9px] font-bold text-ink-muted uppercase mb-1">Loot</p>
+              <p className="text-sm font-black text-green-400">{formatGP(hunt.loot)}</p>
+           </div>
+           <div className="p-3 rounded-xl bg-night-900/60 border border-night-700/50">
+              <p className="text-[9px] font-bold text-ink-muted uppercase mb-1">Duração</p>
+              <p className="text-sm font-black text-ink">{hunt.duration}</p>
+           </div>
+        </div>
+
+        {/* Descrição */}
+        {hunt.description && (
+          <div className="rounded-xl border border-gold-500/10 bg-gold-500/5 p-4">
+             <div className="flex items-center gap-2 mb-2">
+                <FileText className="h-3 w-3 text-gold-400" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-gold-500/80">Descrição</span>
+             </div>
+             <p className="text-sm text-ink/90 leading-relaxed italic">&quot;{hunt.description}&quot;</p>
+          </div>
+        )}
+
+        {/* Itens e Raridades */}
+        <div>
+           <HuntItemsWithRarity 
+              huntId={hunt.id}
+              items={hunt.items.map(i => ({ name: i.name, qty: i.qty }))}
+              creatures={hunt.killedCreatures ?? []}
+           />
+        </div>
+
+        {/* XP Footer */}
+        <div className="flex justify-between items-center pt-4 border-t border-night-700/50 text-[11px] text-ink-muted/80">
+           <span className="inline-flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-gold-500/60" /> XP: {formatFull(hunt.xpGain)}</span>
+           <span className="inline-flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-gold-500/60" /> XP/h: {formatFull(hunt.xpPerHour)}</span>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/* ─────────────────────────── Modal de Edição ─────────────────────────── */
 function EditHuntModal({
   hunt,
   isOpen,
@@ -81,7 +162,7 @@ function EditHuntModal({
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-lg border border-night-700 bg-night-950/80 px-4 py-2.5 text-sm text-ink focus:border-gold-500/50 focus:outline-none"
+            className="w-full rounded-lg border border-night-700 bg-night-950/80 px-4 py-3 text-sm text-ink focus:border-gold-500/50 focus:outline-none"
           />
         </div>
         <div>
@@ -90,7 +171,7 @@ function EditHuntModal({
             type="datetime-local"
             value={createdAt}
             onChange={(e) => setCreatedAt(e.target.value)}
-            className="w-full rounded-lg border border-night-700 bg-night-950/80 px-4 py-2.5 text-sm text-ink focus:border-gold-500/50 focus:outline-none"
+            className="w-full rounded-lg border border-night-700 bg-night-950/80 px-4 py-3 text-sm text-ink focus:border-gold-500/50 focus:outline-none"
           />
         </div>
         <div>
@@ -99,14 +180,14 @@ function EditHuntModal({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
-            className="w-full resize-none rounded-lg border border-night-700 bg-night-950/80 px-4 py-2.5 text-sm text-ink focus:border-gold-500/50 focus:outline-none"
+            className="w-full resize-none rounded-lg border border-night-700 bg-night-950/80 px-4 py-3 text-sm text-ink focus:border-gold-500/50 focus:outline-none"
           />
         </div>
         {error && <p className="text-xs font-bold text-red-400">{error}</p>}
         <div className="flex gap-3 pt-2">
           <GoldButton onClick={handleSave} disabled={saving} className="flex-1">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Salvar
+            Salvar Alterações
           </GoldButton>
           <OutlineButton onClick={onClose} disabled={saving}>Cancelar</OutlineButton>
         </div>
@@ -115,48 +196,16 @@ function EditHuntModal({
   );
 }
 
-function pageWindow(current: number, total: number): (number | "…")[] {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-  const set = new Set<number>([1, 2, current - 1, current, current + 1, total - 1, total]);
-  const sorted = Array.from(set)
-    .filter((p) => p >= 1 && p <= total)
-    .sort((a, b) => a - b);
-  const out: (number | "…")[] = [];
-  let prev = 0;
-  for (const p of sorted) {
-    if (prev && p - prev > 1) out.push("…");
-    out.push(p);
-    prev = p;
-  }
-  return out;
-}
-
-function ProfitCell({ value }: { value: number }) {
-  const positive = value >= 0;
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 whitespace-nowrap font-bold ${positive ? "text-green-400" : "text-red-400"}`}
-      title={`${formatFull(value)} gp`}
-    >
-      {positive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-      {formatSignedGP(value)}
-    </span>
-  );
-}
-
-const iconBtnClass =
-  "flex h-8 w-8 items-center justify-center rounded-lg border border-night-700 text-ink-muted transition-all hover:border-gold-500/40 hover:text-gold-300 disabled:pointer-events-none disabled:opacity-30";
-
+/* ─────────────────────────── HuntsTable ─────────────────────────── */
 export function HuntsTable({
   hunts,
-  expandable = false,
   paginated = false,
   pageSize = 12,
   onRefresh,
 }: HuntsTableProps) {
   const router = useRouter();
   const [page, setPage] = useState(1);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedHunt, setSelectedHunt] = useState<HuntWithItems | null>(null);
   const [editingHunt, setEditingHunt] = useState<HuntWithItems | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -164,7 +213,7 @@ export function HuntsTable({
 
   useEffect(() => {
     setPage(1);
-    setExpandedId(null);
+    setSelectedHunt(null);
   }, [hunts]);
 
   async function handleDelete(id: string) {
@@ -173,6 +222,7 @@ export function HuntsTable({
     try {
       const res = await fetch(`/api/hunts/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
+      setSelectedHunt(null);
       if (onRefresh) onRefresh();
       router.refresh();
     } catch {
@@ -192,134 +242,110 @@ export function HuntsTable({
     return (
       <EmptyState
         icon={Swords}
-        title="Nenhum registro no período"
-        message="Cadastre uma hunt ou uma rotação de bosses para começar a montar seu histórico de profit."
+        title="Nenhum registro"
+        message="Cadastre uma hunt ou rotação para começar."
         action={<GoldLink href="/new">Criar registro</GoldLink>}
       />
     );
   }
 
-  const colCount = expandable ? 6 : 5;
-
   return (
-    <div>
+    <div className="space-y-4">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[560px] text-sm">
+        <table className="w-full min-w-[600px] text-sm border-separate border-spacing-y-2 px-1">
           <thead>
-            <tr className="border-b border-night-700 bg-night-900/40">
-              {expandable && <th className="w-10 px-3 py-3" aria-label="Expandir" />}
-              {["Data", "Duração", "Loot", "Gasto", "Profit"].map((col, i) => (
-                <th
-                  key={col}
-                  className={`px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-muted ${
-                    i >= 2 ? "text-right" : "text-left"
-                  }`}
-                >
-                  {col}
-                </th>
-              ))}
+            <tr className="text-left">
+              <th className="px-5 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-ink-muted opacity-50">Data / Atividade</th>
+              <th className="px-5 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-ink-muted opacity-50">Duração</th>
+              <th className="px-5 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-ink-muted opacity-50 text-right">Loot</th>
+              <th className="px-5 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-ink-muted opacity-50 text-right">Gasto</th>
+              <th className="px-5 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-ink-muted opacity-50 text-right">Profit</th>
             </tr>
           </thead>
           <tbody>
             {visible.map((hunt) => {
-              const expanded = expandable && expandedId === hunt.id;
-              const date = new Date(hunt.createdAt);
+              const d = new Date(hunt.createdAt);
+              const pos = hunt.balance >= 0;
               return (
-                <Fragment key={hunt.id}>
-                  <tr
-                    onClick={expandable ? () => setExpandedId(expanded ? null : hunt.id) : undefined}
-                    className={`border-b border-night-700/60 transition-colors ${expandable ? "cursor-pointer" : ""} ${expanded ? "bg-gold-500/[0.04]" : "hover:bg-night-800/50"}`}
-                  >
-                    {expandable && (
-                      <td className="px-3 py-3.5">
-                        <ChevronRight className={`h-4 w-4 text-ink-muted transition-transform duration-200 ${expanded ? "rotate-90 text-gold-400" : ""}`} />
-                      </td>
-                    )}
-                    <td className="whitespace-nowrap px-4 py-3.5">
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-ink">
-                            {hunt.title || (Number.isNaN(date.getTime()) ? "—" : format(date, "dd/MM/yyyy HH:mm"))}
-                          </span>
-                        </div>
-                        <span className="text-[10px] font-medium text-ink-muted/60">
-                          {hunt.title ? (Number.isNaN(date.getTime()) ? "—" : format(date, "dd/MM/yyyy HH:mm")) : ""}
-                        </span>
-                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                          <span className="inline-flex rounded-full border border-gold-500/20 bg-gold-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-gold-300">
-                            {getActivityShortLabel(hunt.activityType)}
-                          </span>
-                          {hunt.character && (
-                            <span className="inline-flex rounded-full border border-night-700 bg-night-800 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-ink-muted">
-                              {hunt.character.name}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3.5">
-                      <span className="inline-flex items-center gap-1.5 text-xs text-ink-muted">
-                        <Clock className="h-3 w-3 text-gold-500/70" /> {hunt.duration}
+                <tr
+                  key={hunt.id}
+                  onClick={() => setSelectedHunt(hunt)}
+                  className="group cursor-pointer"
+                >
+                  <td className="rounded-l-2xl border-y border-l border-night-700 bg-night-850 p-4 transition-all group-hover:border-gold-500/30 group-hover:bg-night-800">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-black text-ink group-hover:text-gold-300 transition-colors">
+                        {hunt.title || format(d, "dd/MM/yyyy HH:mm")}
                       </span>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-right text-xs font-semibold text-green-400">{formatGP(hunt.loot)}</td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-right text-xs font-semibold text-red-400">{formatGP(hunt.supplies)}</td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-right text-xs">
-                      <ProfitCell value={hunt.balance} />
-                    </td>
-                  </tr>
-                  {expanded && (
-                    <tr className="border-b border-night-700/60 bg-night-900/50">
-                      <td colSpan={colCount} className="px-5 py-4">
-                        {hunt.description && (
-                          <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-gold-500/15 bg-gold-500/5 p-3">
-                            <FileText className="mt-0.5 h-3.5 w-3.5 text-gold-400" />
-                            <div>
-                              <p className="text-[10px] font-bold uppercase tracking-wider text-gold-500/80">Descrição</p>
-                              <p className="mt-0.5 text-xs text-ink/90">{hunt.description}</p>
-                            </div>
-                          </div>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <span className="rounded-full border border-gold-500/20 bg-gold-500/5 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-gold-400/80">
+                          {getActivityShortLabel(hunt.activityType)}
+                        </span>
+                        {hunt.character && (
+                          <span className="rounded-full border border-night-700 bg-night-900 px-2 py-0.5 text-[9px] font-bold text-ink-muted">
+                            {hunt.character.name}
+                          </span>
                         )}
-                        <HuntItemsWithRarity
-                          huntId={hunt.id}
-                          items={hunt.items.map(i => ({ name: i.name, qty: i.qty }))}
-                          creatures={hunt.killedCreatures ?? []}
-                        />
-                        <div className="mt-3 flex flex-wrap items-center justify-between gap-4 border-t border-night-700/50 pt-3">
-                          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px] text-ink-muted/90">
-                            <span className="inline-flex items-center gap-1.5">
-                              <Sparkles className="h-3 w-3 text-gold-500/70" /> XP ganho: {formatFull(hunt.xpGain)}
-                            </span>
-                            <span className="inline-flex items-center gap-1.5">
-                              <Zap className="h-3 w-3 text-gold-500/70" /> XP/h: {formatFull(hunt.xpPerHour)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setEditingHunt(hunt); }}
-                              className="flex h-7 items-center gap-1.5 rounded-lg border border-night-700 bg-night-800 px-2.5 text-[10px] font-bold text-ink-muted transition-colors hover:border-gold-500/30 hover:text-gold-300"
-                            >
-                              <Edit2 className="h-3 w-3" /> Editar
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleDelete(hunt.id); }}
-                              disabled={deletingId === hunt.id}
-                              className="flex h-7 items-center gap-1.5 rounded-lg border border-night-700 bg-night-800 px-2.5 text-[10px] font-bold text-red-400/70 transition-colors hover:border-red-400/30 hover:text-red-400 disabled:opacity-50"
-                            >
-                              {deletingId === hunt.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-                              Excluir
-                            </button>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="border-y border-night-700 bg-night-850 p-4 transition-all group-hover:border-gold-500/30 group-hover:bg-night-800">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-ink-muted">
+                      <Clock className="h-3.5 w-3.5 text-gold-500/40" /> {hunt.duration}
+                    </span>
+                  </td>
+                  <td className="border-y border-night-700 bg-night-850 p-4 text-right transition-all group-hover:border-gold-500/30 group-hover:bg-night-800">
+                    <span className="text-sm font-black text-green-400">{formatGP(hunt.loot)}</span>
+                  </td>
+                  <td className="border-y border-night-700 bg-night-850 p-4 text-right transition-all group-hover:border-gold-500/30 group-hover:bg-night-800">
+                    <span className="text-sm font-black text-red-400">{formatGP(hunt.supplies)}</span>
+                  </td>
+                  <td className="rounded-r-2xl border-y border-r border-night-700 bg-night-850 p-4 text-right transition-all group-hover:border-gold-500/30 group-hover:bg-night-800">
+                    <div className="flex items-center justify-end gap-2">
+                      <span className={`text-sm font-black ${pos ? "text-green-400" : "text-red-400"}`}>
+                        {formatSignedGP(hunt.balance)}
+                      </span>
+                      <ChevronRight className="h-4 w-4 text-ink-muted opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                    </div>
+                  </td>
+                </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+
+      {/* Paginação */}
+      {paginated && pageCount > 1 && (
+        <div className="flex items-center justify-center gap-4 py-4">
+           <button 
+            disabled={page === 1} 
+            onClick={() => setPage(p => p - 1)}
+            className="p-2 rounded-xl border border-night-700 bg-night-900 text-ink-muted disabled:opacity-30 hover:border-gold-500/40 transition-colors"
+           >
+            <ChevronLeft className="h-5 w-5" />
+           </button>
+           <span className="text-xs font-black text-ink uppercase tracking-widest">Página {page} de {pageCount}</span>
+           <button 
+            disabled={page === pageCount} 
+            onClick={() => setPage(p => p + 1)}
+            className="p-2 rounded-xl border border-night-700 bg-night-900 text-ink-muted disabled:opacity-30 hover:border-gold-500/40 transition-colors"
+           >
+            <ChevronRight className="h-5 w-5" />
+           </button>
+        </div>
+      )}
+
+      {/* Modais */}
+      {selectedHunt && (
+        <HuntDetailsModal
+          hunt={selectedHunt}
+          onClose={() => setSelectedHunt(null)}
+          onEdit={() => { setEditingHunt(selectedHunt); setSelectedHunt(null); }}
+          onDelete={() => handleDelete(selectedHunt.id)}
+          deleting={deletingId === selectedHunt.id}
+        />
+      )}
 
       {editingHunt && (
         <EditHuntModal
@@ -331,42 +357,6 @@ export function HuntsTable({
             router.refresh();
           }}
         />
-      )}
-
-      {paginated && pageCount > 1 && (
-        <div className="flex items-center justify-between gap-2 px-4 py-3">
-          <p className="text-[11px] text-ink-muted">
-            {hunts.length} registros · página {page} de {pageCount}
-          </p>
-          <div className="flex items-center gap-1">
-            <button type="button" aria-label="Página anterior" className={iconBtnClass} disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <div className="hidden items-center gap-1 sm:flex">
-              {pageWindow(page, pageCount).map((p, i) =>
-                p === "…" ? (
-                  <span key={`ellipsis-${i}`} className="px-1.5 text-xs text-ink-muted">…</span>
-                ) : (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPage(p)}
-                    className={`h-8 w-8 rounded-lg border text-xs font-semibold transition-all ${
-                      p === page
-                        ? "border-gold-500/45 bg-gold-500/15 text-gold-300"
-                        : "border-night-700 text-ink-muted hover:border-night-600 hover:text-ink"
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ),
-              )}
-            </div>
-            <button type="button" aria-label="Próxima página" className={iconBtnClass} disabled={page === pageCount} onClick={() => setPage((p) => p + 1)}>
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
       )}
     </div>
   );
