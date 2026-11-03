@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowDownAZ, ArrowDownZA, CheckCircle2, ChevronDown, Loader2, Search, Swords, Trophy } from "lucide-react";
+import { ArrowDownAZ, ArrowDownZA, CheckCircle2, ChevronDown, Loader2, RefreshCcw, Search, Shield, Swords, Trophy } from "lucide-react";
 import type { BestiaryEntry } from "@/types";
 import { formatFull } from "@/lib/format";
 import { EmptyState } from "./ui";
@@ -31,44 +31,53 @@ function StageBar({ entry }: { entry: BestiaryEntry }) {
   const { stage1, stage2, stage3 } = entry.stages;
   const s = entry.currentStage;
 
+  // Barra dividida em 3 blocos iguais de 33.3%
   let fill = 0;
-  if      (s === 0) fill = Math.min(33, (entry.totalKills / stage1) * 33);
-  else if (s === 1) fill = 33 + Math.min(33, ((entry.totalKills - stage1) / (stage2 - stage1)) * 33);
-  else if (s === 2) fill = 66 + Math.min(34, ((entry.totalKills - stage2) / (stage3 - stage2)) * 34);
+  if      (s === 0) fill = Math.min(33.33, (entry.totalKills / stage1) * 33.33);
+  else if (s === 1) fill = 33.33 + Math.min(33.33, ((entry.totalKills - stage1) / (stage2 - stage1)) * 33.33);
+  else if (s === 2) fill = 66.66 + Math.min(33.34, ((entry.totalKills - stage2) / (stage3 - stage2)) * 33.34);
   else              fill = 100;
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3">
       {/* Trilho */}
       <div className="relative h-4 overflow-visible">
-        <div className="absolute inset-y-0 left-0 right-0 rounded-full border border-night-700/60 bg-night-950/90 overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-1000"
-            style={{ width: `${fill}%`, background: s === 3 ? "linear-gradient(90deg,#d4a843,#f0d078)" : colors.bar }}
-          />
-          <div className="absolute inset-y-0 left-1/3 w-px bg-night-600/60" />
-          <div className="absolute inset-y-0 left-2/3 w-px bg-night-600/60" />
-        </div>
+        <div className="absolute inset-0 rounded-full border border-night-700 bg-night-950/80 shadow-inner" />
+        
+        {/* Fill */}
+        <div
+          className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000"
+          style={{ 
+            width: `${fill}%`, 
+            background: s === 3 ? "linear-gradient(90deg, #d4a843, #f0d078)" : colors.bar,
+            boxShadow: fill > 0 ? `0 0 10px ${s === 3 ? "#d4a843" : colors.bar}40` : "none"
+          }}
+        />
 
-        {/* Marcadores circulares — Stage 1, 2, 3 */}
-        {[
-          { pos: "left-1/3",  unlocked: s >= 1 },
-          { pos: "left-2/3",  unlocked: s >= 2 },
-          { pos: "right-0",   unlocked: s >= 3 },
-        ].map(({ pos, unlocked }, i) => (
-          <div
-            key={i}
-            className={`absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border-2 flex items-center justify-center ${pos} ${i === 2 ? "-translate-x-full" : "-translate-x-1/2"}`}
-            style={{
-              background: unlocked ? colors.bar : "#111118",
-              borderColor: unlocked ? colors.bar : "rgba(136,136,160,0.3)",
-              boxShadow: unlocked ? `0 0 10px ${colors.bar}aa` : "none",
-              zIndex: 10,
-            }}
-          >
-            {unlocked && <div className="h-1.5 w-1.5 rounded-full bg-white/80" />}
-          </div>
-        ))}
+        {/* Divisórias de Bloco */}
+        <div className="absolute inset-y-0 left-1/3 w-px bg-white/10 z-10" />
+        <div className="absolute inset-y-0 left-2/3 w-px bg-white/10 z-10" />
+
+        {/* Marcadores circulares - Posições 33% e 66% e 100% */}
+        {[33.33, 66.66, 100].map((pos, i) => {
+          const unlocked = s >= (i + 1);
+          return (
+            <div
+              key={i}
+              className={`absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border-2 flex items-center justify-center transition-all duration-500`}
+              style={{
+                left: `${pos}%`,
+                transform: `translate(${i === 2 ? "-100%" : "-50%"}, -50%)`,
+                background: unlocked ? (s === 3 && i === 2 ? "#d4a843" : colors.bar) : "#0f0f14",
+                borderColor: unlocked ? (s === 3 && i === 2 ? "#f0d078" : colors.bar) : "rgba(136,136,160,0.3)",
+                boxShadow: unlocked ? `0 0 12px ${colors.bar}80` : "none",
+                zIndex: 20,
+              }}
+            >
+              {unlocked && <div className="h-1.5 w-1.5 rounded-full bg-white shadow-sm" />}
+            </div>
+          );
+        })}
       </div>
 
       {/* Labels de cada stage */}
@@ -169,20 +178,31 @@ const LEGEND_DATA = [
 
 function DifficultyLegend() {
   return (
-    <div className="rounded-2xl border border-night-700/50 bg-night-900/20 p-5">
-      <p className="mb-4 text-center text-[9px] font-black uppercase tracking-[0.22em] text-ink-muted/50">
-        Estágios oficiais · kills necessários por dificuldade
-      </p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+    <div className="animate-fade-up max-w-4xl mx-auto rounded-3xl border border-night-700/50 bg-gradient-to-br from-night-900/60 to-night-950/40 p-6 shadow-2xl relative overflow-hidden">
+      {/* Decoração de fundo */}
+      <div className="absolute top-0 right-0 h-32 w-32 bg-purple-500/5 blur-3xl -z-10" />
+      <div className="absolute bottom-0 left-0 h-32 w-32 bg-blue-500/5 blur-3xl -z-10" />
+      
+      <div className="mb-6 text-center">
+        <h3 className="text-xs font-black uppercase tracking-[0.3em] text-gold-500/60">Tabela de Classes</h3>
+        <p className="mt-1 text-[11px] text-ink-muted/70">Metas oficiais de abates e recompensas em Charm Points</p>
+      </div>
+      
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         {LEGEND_DATA.map(({ key, stages, pts }) => {
           const c = DIFF_COLOR[key];
           return (
-            <div key={key} className="rounded-xl border px-3 py-2.5 flex items-center gap-3"
-              style={{ borderColor: `${c.bar}22`, background: c.bg }}>
-              <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: c.bar, boxShadow: `0 0 8px ${c.bar}90` }} />
+            <div key={key} className="group flex items-center gap-4 rounded-2xl border border-night-700/40 bg-night-950/40 p-4 transition-all hover:border-gold-500/20 hover:bg-night-900/60">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors group-hover:scale-110 duration-300"
+                style={{ borderColor: `${c.bar}30`, background: `${c.text}10`, color: c.text }}>
+                <Shield className="h-5 w-5" strokeWidth={2.5} />
+              </div>
               <div className="min-w-0">
-                <p className="text-[11px] font-black" style={{ color: c.text }}>{DIFF_LABEL[key]}</p>
-                <p className="text-[9px] text-ink-muted/60 leading-relaxed">{stages} · {pts} pts</p>
+                <p className="text-[12px] font-black tracking-tight" style={{ color: c.text }}>{DIFF_LABEL[key]}</p>
+                <div className="mt-0.5 flex flex-col">
+                  <span className="text-[10px] font-bold text-ink-muted/80">{stages} kills</span>
+                  <span className="text-[9px] font-black text-gold-500/70 uppercase tracking-tighter">{pts} pts</span>
+                </div>
               </div>
             </div>
           );
@@ -206,14 +226,43 @@ export function BestiaryView() {
   const [stageFilter, setStageFilter] = useState<StageFilter>("all");
   const [sortKey, setSortKey] = useState<SortKey>("kills_desc");
   const [showFilters, setShowFilters] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  async function fetchBestiary() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/bestiary");
+      const data = await res.json();
+      setEntries(data.bestiary || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    fetch("/api/bestiary")
-      .then((r) => r.json())
-      .then((data) => setEntries(data.bestiary || []))
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    fetchBestiary();
   }, []);
+
+  async function handleRecalculate() {
+    if (syncing) return;
+    if (!window.confirm("Isso vai recalcular todo o seu Bestiário a partir do seu histórico de hunts para corrigir erros de contagem. Deseja continuar?")) return;
+    
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/bestiary/recalculate", { method: "POST" });
+      if (res.ok) {
+        await fetchBestiary();
+      } else {
+        throw new Error();
+      }
+    } catch {
+      alert("Falha ao sincronizar bestiário.");
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   const processed = useMemo(() => {
     let result = [...entries];
@@ -240,7 +289,7 @@ export function BestiaryView() {
   return (
     <div className="max-w-6xl mx-auto space-y-7 pb-12">
       {/* Header */}
-      <header className="animate-fade-up text-center space-y-3">
+      <header className="animate-fade-up text-center space-y-4">
         <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-700 shadow-[0_0_40px_-8px_rgba(168,85,247,0.5)] text-white">
           <Trophy className="h-8 w-8" strokeWidth={2.4} />
         </div>
@@ -252,6 +301,14 @@ export function BestiaryView() {
             Progresso de abates e estágios oficiais de cada criatura do Tibia.
           </p>
         </div>
+        <button
+          onClick={handleRecalculate}
+          disabled={syncing || loading}
+          className="mx-auto flex items-center gap-2 rounded-xl border border-purple-500/30 bg-purple-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-widest text-purple-300 transition-all hover:bg-purple-500/20 disabled:opacity-50"
+        >
+          {syncing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCcw className="h-3 w-3" />}
+          {syncing ? "Sincronizando..." : "Sincronizar Abates"}
+        </button>
       </header>
 
       {loading ? (

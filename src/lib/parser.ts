@@ -254,3 +254,48 @@ export function parseHuntAnalyser(text: string): ParsedHunt | null {
     killedCreatures: Array.from(creatureMap.keys()),
   };
 }
+
+/**
+ * Extrai um mapa de [Nome da Criatura] -> [Quantidade de Kills] a partir do texto bruto.
+ * Útil para reconstruir o Bestiário a partir de hunts existentes.
+ */
+export function parseKilledMonsters(text: string | null): Map<string, number> {
+  const creatureMap = new Map<string, number>();
+  if (!text) return creatureMap;
+
+  const lines = text.split(/\r?\n/);
+  const RE_ITEM_QTYX = /^([\d,]+)\s*x\s+(.+)$/i;
+  let inMonstersSection = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    if (trimmed.toLowerCase().includes("killed monsters:")) {
+      inMonstersSection = true;
+      continue;
+    }
+    if (trimmed.toLowerCase().includes("looted items:")) {
+      inMonstersSection = false;
+      continue;
+    }
+
+    if (inMonstersSection) {
+      const match = trimmed.match(RE_ITEM_QTYX);
+      if (match) {
+        const qty = parseInt(match[1].replace(/,/g, ""), 10);
+        const name = match[2]
+          .trim()
+          .split(" ")
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+          .join(" ");
+
+        if (qty > 0 && name) {
+          creatureMap.set(name, (creatureMap.get(name) ?? 0) + qty);
+        }
+      }
+    }
+  }
+  return creatureMap;
+}
+
