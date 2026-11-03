@@ -1,96 +1,90 @@
 "use client";
 
-import { useState } from "react";
-import { 
-  BadgeCheck, 
-  ChevronRight, 
-  Compass, 
-  Filter, 
-  Map as MapIcon, 
-  ShieldCheck, 
-  Sparkles, 
-  Swords, 
-  Zap 
+import { useEffect, useState } from "react";
+import {
+  ChevronDown,
+  Compass,
+  ExternalLink,
+  Loader2,
+  MapPin,
+  Search,
+  Shield,
+  Swords,
 } from "lucide-react";
-import { SectionCard } from "./ui";
+import { EmptyState } from "./ui";
 
-const HUNT_GUIDES: any[] = [
-  {
-    name: "Gazer Spectres",
-    level: "250+",
-    vocation: ["Druid", "Knight", "Paladin"],
-    description: "Excelente profit e XP médio. Requer resistência a fogo.",
-    difficulty: "Hard",
-    exp: "Medium",
-    profit: "High",
-    location: "Port Hope (Haunted Temple)",
-  },
-  {
-    name: "Pirats (Wreckoning)",
-    level: "150+",
-    vocation: ["Knight", "Paladin", "Druid", "Sorcerer"],
-    description: "Loot absurdo em itens de criatura. Ótimo para solos ou duplas.",
-    difficulty: "Medium",
-    exp: "Medium",
-    profit: "High",
-    location: "Bounac",
-  },
-  {
-    name: "Werelions",
-    level: "300+",
-    vocation: ["Knight", "Paladin"],
-    description: "Melhor spot de profit/XP equilibrado para level médio.",
-    difficulty: "Hard",
-    exp: "High",
-    profit: "High",
-    location: "Darashia",
-  },
-  {
-    name: "Carnivoras' Rocks",
-    level: "200+",
-    vocation: ["Druid", "Sorcerer"],
-    description: "Paraíso dos mages. Profit puro em gold direto.",
-    difficulty: "Medium",
-    exp: "Medium",
-    profit: "High",
-    location: "Port Hope",
-  },
-  {
-    name: "Mirror (Asura Palace)",
-    level: "400+",
-    vocation: ["Knight", "Paladin", "Druid"],
-    description: "XP altíssima. Risco alto de morte sem time.",
-    difficulty: "Hardcore",
-    exp: "High",
-    profit: "Medium",
-    location: "Tiquanda",
-  },
-  {
-    name: "Ancient Scarabs",
-    level: "50+",
-    vocation: ["Druid", "Sorcerer"],
-    description: "Melhor XP para mages low level. Use magias de gelo.",
-    difficulty: "Medium",
-    exp: "High",
-    profit: "Low",
-    location: "Mother of Scarabs Lair",
-  }
-];
-
-function DifficultyBadge({ level }: { level: string }) {
-  const colors: any = { Easy: "text-green-400 bg-green-400/10", Medium: "text-blue-400 bg-blue-400/10", Hard: "text-purple-400 bg-purple-400/10", Hardcore: "text-red-400 bg-red-400/10" };
-  return (
-    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border border-white/5 ${colors[level]}`}>
-      {level}
-    </span>
-  );
+interface HuntingPlace {
+  id: number;
+  name: string;
+  city: string;
+  vocation: string;
+  wikiUrl: string;
 }
 
+const VOCATIONS = ["All", "Knight", "Paladin", "Druid", "Sorcerer"];
+
 export function HuntGuideView() {
-  const [filter, setFilter] = useState("all");
+  const [places, setPlaces] = useState<HuntingPlace[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+
+  const [query, setQuery] = useState("");
+  const [cityFilter, setCityFilter] = useState("");
+  const [vocFilter, setVocFilter] = useState("all");
+  const [showFilters, setShowFilters] = useState(false);
+
+  async function fetchPlaces() {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (query.trim()) params.set("q", query.trim());
+      if (cityFilter) params.set("city", cityFilter);
+      if (vocFilter !== "all") params.set("vocation", vocFilter);
+
+      const res = await fetch(`/api/hunting-places?${params.toString()}`);
+      const data = await res.json();
+      setPlaces(data.places ?? []);
+      setTotal(data.total ?? 0);
+      if (data.cities) setCities(data.cities);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchPlaces();
+  }, [vocFilter, cityFilter]);
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    fetchPlaces();
+  }
+
+  function parseVocations(raw: string): string[] {
+    const lower = raw.toLowerCase();
+    if (lower.includes("all")) return ["All"];
+    const vocs: string[] = [];
+    if (lower.includes("knight")) vocs.push("Knight");
+    if (lower.includes("paladin")) vocs.push("Paladin");
+    if (lower.includes("druid")) vocs.push("Druid");
+    if (lower.includes("sorcerer")) vocs.push("Sorcerer");
+    return vocs.length > 0 ? vocs : ["All"];
+  }
+
+  const VOC_COLOR: Record<string, string> = {
+    All: "text-ink-muted border-night-700 bg-night-800",
+    Knight: "text-blue-400 border-blue-500/25 bg-blue-500/10",
+    Paladin: "text-green-400 border-green-500/25 bg-green-500/10",
+    Druid: "text-cyan-400 border-cyan-500/25 bg-cyan-500/10",
+    Sorcerer: "text-red-400 border-red-500/25 bg-red-500/10",
+  };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-10 pb-12">
+    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+      {/* Header */}
       <header className="animate-fade-up text-center space-y-4">
         <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-green-400 to-teal-600 shadow-[0_0_40px_-8px_rgba(52,211,153,0.5)] text-white">
           <Compass className="h-8 w-8" strokeWidth={2.4} />
@@ -100,54 +94,109 @@ export function HuntGuideView() {
             Guia de <span className="text-green-400">Hunts</span>
           </h1>
           <p className="mt-1.5 text-sm text-ink-muted max-w-lg mx-auto">
-            Sugestões de locais para caçar baseado em performance e feedback da comunidade.
+            {total} locais de caça catalogados do TibiaWiki. Filtre por vocação, cidade ou busque diretamente.
           </p>
         </div>
       </header>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {HUNT_GUIDES.map((hunt, i) => (
-          <div 
-            key={hunt.name}
-            className="animate-fade-up group flex flex-col rounded-3xl border border-night-700 bg-night-850 overflow-hidden hover:border-green-500/30 transition-all shadow-xl"
-            style={{ animationDelay: `${i * 60}ms` }}
-          >
-            <div className="p-6 space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <DifficultyBadge level={hunt.difficulty} />
-                  <h3 className="text-xl font-black text-ink group-hover:text-green-400 transition-colors">{hunt.name}</h3>
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-ink-muted uppercase">
-                    <MapIcon className="h-3 w-3" /> {hunt.location}
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                   <span className="text-[10px] font-black text-gold-500 bg-gold-500/10 px-2 py-0.5 rounded-lg border border-gold-500/20">{hunt.level}</span>
-                </div>
-              </div>
+      {/* Barra de Busca e Filtros */}
+      <div className="animate-fade-up rounded-2xl border border-night-700/50 bg-night-900/30 p-4 space-y-4">
+        <form onSubmit={handleSearch} className="flex items-center gap-3">
+          <div className="relative flex-1 flex items-center gap-2 rounded-xl border border-night-700 bg-night-900/60 px-4 py-2.5">
+            <Search className="h-4 w-4 text-ink-muted shrink-0" />
+            <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar local de caça..."
+              className="bg-transparent border-none outline-none text-sm text-ink w-full placeholder:text-ink-muted/30" />
+          </div>
+          <button type="submit" className="rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-2.5 text-sm font-bold text-green-400 transition-all hover:bg-green-500/20">
+            Buscar
+          </button>
+          <button type="button" onClick={() => setShowFilters((v) => !v)}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold transition-all ${
+              showFilters ? "border-gold-500/40 bg-gold-500/10 text-gold-300" : "border-night-700 bg-night-900/60 text-ink-muted hover:text-ink"
+            }`}>
+            Filtros <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
+          </button>
+        </form>
 
-              <p className="text-xs leading-relaxed text-ink-muted line-clamp-2">{hunt.description}</p>
-
+        {showFilters && (
+          <div className="animate-fade-up grid gap-4 sm:grid-cols-2 border-t border-night-700/50 pt-4">
+            {/* Vocação */}
+            <div className="space-y-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-ink-muted/60">Vocação</p>
               <div className="flex flex-wrap gap-1.5">
-                {hunt.vocation.map((v: string) => (
-                  <span key={v} className="px-2 py-0.5 rounded-md bg-night-900 border border-night-700 text-[9px] font-bold text-ink-muted/80">{v}</span>
+                {["all", ...VOCATIONS.slice(1).map((v) => v.toLowerCase())].map((v) => (
+                  <button key={v} type="button" onClick={() => setVocFilter(v)}
+                    className={`rounded-full border px-3 py-1.5 text-[10px] font-bold transition-all ${
+                      vocFilter === v ? "border-gold-500/45 bg-gold-500/15 text-gold-300" : "border-night-700 text-ink-muted hover:text-ink"
+                    }`}>
+                    {v === "all" ? "Todas" : v.charAt(0).toUpperCase() + v.slice(1)}
+                  </button>
                 ))}
               </div>
             </div>
 
-            <div className="mt-auto grid grid-cols-2 divide-x divide-night-700 border-t border-night-700">
-               <div className="p-3 text-center">
-                  <p className="text-[8px] font-black uppercase text-ink-muted/60 mb-1">Experiência</p>
-                  <p className={`text-xs font-black ${hunt.exp === 'High' ? 'text-blue-400' : 'text-ink'}`}>{hunt.exp}</p>
-               </div>
-               <div className="p-3 text-center">
-                  <p className="text-[8px] font-black uppercase text-ink-muted/60 mb-1">Lucro/Profit</p>
-                  <p className={`text-xs font-black ${hunt.profit === 'High' ? 'text-green-400' : 'text-ink'}`}>{hunt.profit}</p>
-               </div>
+            {/* Cidade */}
+            <div className="space-y-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-ink-muted/60">Cidade</p>
+              <select value={cityFilter} onChange={(e) => setCityFilter(e.target.value)}
+                className="w-full rounded-xl border border-night-700 bg-night-900/60 px-4 py-2.5 text-sm text-ink focus:border-gold-500/50 focus:outline-none">
+                <option value="">Todas as cidades</option>
+                {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
           </div>
-        ))}
+        )}
       </div>
+
+      {/* Lista */}
+      {loading ? (
+        <div className="py-20 text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-green-400" />
+        </div>
+      ) : places.length === 0 ? (
+        <EmptyState icon={Compass} title="Nenhum local encontrado" message="Tente ajustar os filtros ou termos de busca." />
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {places.map((place, i) => {
+            const vocs = parseVocations(place.vocation);
+            return (
+              <a
+                key={place.id}
+                href={place.wikiUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="animate-fade-up group rounded-2xl border border-night-700 bg-night-850 p-5 transition-all hover:-translate-y-0.5 hover:border-green-500/30 hover:shadow-lg"
+                style={{ animationDelay: `${Math.min(i * 20, 400)}ms` }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-black text-ink group-hover:text-green-400 transition-colors truncate">{place.name}</h3>
+                    <p className="mt-1 flex items-center gap-1.5 text-[10px] font-bold text-ink-muted">
+                      <MapPin className="h-3 w-3 shrink-0" /> {place.city}
+                    </p>
+                  </div>
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0 text-ink-muted/30 group-hover:text-green-400/70 transition-colors mt-0.5" />
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {vocs.map((v) => (
+                    <span key={v} className={`rounded-full border px-2 py-0.5 text-[9px] font-bold ${VOC_COLOR[v] ?? VOC_COLOR.All}`}>
+                      {v}
+                    </span>
+                  ))}
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      )}
+
+      {!loading && places.length > 0 && (
+        <p className="text-center text-[10px] text-ink-muted/50">
+          Mostrando {places.length} de {total} locais · Dados do TibiaWiki
+        </p>
+      )}
     </div>
   );
 }
