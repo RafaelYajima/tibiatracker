@@ -14,28 +14,25 @@ interface HuntingPlaceRaw {
   wikiUrl: string;
 }
 
-let cachedData: HuntingPlaceRaw[] | null = null;
-let cacheTime = 0;
-const CACHE_TTL = 60 * 60 * 1000; // 1 hora
-
 /** GET /api/hunting-places?city=&vocation=&q= */
 export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
 
-    // Cache em memória
-    if (!cachedData || Date.now() - cacheTime > CACHE_TTL) {
-      const res = await fetch("https://tibiadata.bytewizards.de/api/v1/hunting-places/list", {
-        signal: AbortSignal.timeout(12000),
-        headers: { Accept: "application/json" },
-      });
-      if (!res.ok) return NextResponse.json({ error: "API indisponível." }, { status: 502 });
-      cachedData = await res.json();
-      cacheTime = Date.now();
+    // Delegação do cache para o motor nativo do Next.js (seguro na Vercel)
+    const res = await fetch("https://tibiadata.bytewizards.de/api/v1/hunting-places/list", {
+      signal: AbortSignal.timeout(15000),
+      headers: { Accept: "application/json" },
+      next: { revalidate: 3600 }, // Cache nativo por 1 hora
+    });
+    
+    if (!res.ok) {
+      return NextResponse.json({ error: "TibiaData API indisponível no momento." }, { status: 502 });
     }
-
-    let results = cachedData ?? [];
+    
+    const data: HuntingPlaceRaw[] = await res.json();
+    let results = Array.isArray(data) ? data : [];
 
     const q = req.nextUrl.searchParams.get("q")?.toLowerCase();
     const city = req.nextUrl.searchParams.get("city")?.toLowerCase();
@@ -51,7 +48,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Extrair cidades únicas para os filtros
-    const cities = [...new Set((cachedData ?? []).map((h) => h.city).filter(Boolean))].sort();
+    const cities = [...new Set(data.map((h) => h.city).filter(Boolean))].sort();
 
     return NextResponse.json({
       places: results.slice(0, 60).map((h) => ({

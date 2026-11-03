@@ -67,6 +67,7 @@ function extractKilledCreaturesWithQty(rawText: string | null): { name: string; 
       result.push({
         name,
         qty,
+        // Fallback progressivo é gerenciado no JSX onError
         imageUrl: `https://tibia.fandom.com/wiki/Special:FilePath/${encodeURIComponent(name)}.gif`,
       });
     }
@@ -155,16 +156,17 @@ function HuntDetailsModal({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {killed.map((mob) => (
                 <div key={mob.name} className="rounded-xl border border-night-700 bg-night-900/50 p-3 flex items-center gap-3">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-night-950/70 border border-night-700 overflow-hidden shrink-0">
+                  <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-night-700 bg-night-950/70">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={mob.imageUrl}
                       alt={mob.name}
-                      className="h-10 w-10 object-contain"
+                      className="relative z-10 h-10 w-10 object-contain"
                       onError={(e) => {
                         const img = e.currentTarget;
                         if (!img.dataset.fallbackStep) {
                           img.dataset.fallbackStep = "1";
+                          // Tenta .png caso o .gif falhe (ex: Flimsy Lost Soul.png)
                           img.src = `https://tibia.fandom.com/wiki/Special:FilePath/${encodeURIComponent(mob.name)}.png`;
                         } else {
                           img.src = "https://tibia.fandom.com/wiki/Special:FilePath/Question_Mark.gif";
